@@ -11,6 +11,12 @@ Website quản lý khách sạn chạy hoàn toàn trên trình duyệt (HTML + 
 
 Tài khoản mẫu: `admin` / `admin123` (quản lý), `nhanvien1` / `123456` (nhân viên).
 
+## Ảnh món ăn
+Mỗi món có biểu tượng emoji mặc định. Muốn dùng ảnh thật, tạo thư mục `images/` cùng cấp với `index.html` và upload ảnh đặt tên theo mã món: `cf`, `td`, `ns`, `cc`, `bi`, `bm`, `pho`, `com`, `mx`, `tc` (đuôi `.jpg` hoặc `.png`), ví dụ `images/pho.jpg`. Món nào thiếu ảnh sẽ tự hiện emoji.
+
+## Báo khẩn cấp
+Khách bấm nút đỏ trên trang gọi đồ, một banner đỏ kèm tiếng bíp hiện ngay ở đầu trang của mọi nhân viên và quản lý đang mở web. Nhân viên bấm *Tiếp nhận* rồi *Đã xử lý*, khách thấy trạng thái cập nhật. Cần bật dữ liệu dùng chung (Firebase) và rules có thêm `alerts`.
+
 ## Cấu trúc
 ```
 index.html   giao diện chính
@@ -46,6 +52,7 @@ GitHub Pages chỉ chứa file tĩnh, không có máy chủ. Mặc định (`FIR
      match /databases/{db}/documents {
        match /orders/{id} { allow read, write: if true; }
        match /chat/{id}   { allow read, write: if true; }
+       match /alerts/{id} { allow read, write: if true; }
      }
    }
    ```

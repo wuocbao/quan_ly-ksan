@@ -42,3 +42,8 @@ h3{margin:0 0 8px}
 .bub small{display:block;opacity:.7;font-size:11px}
 .s3{--c:var(--pr)}
 .qr svg{width:100%;height:auto;max-width:190px}
+.ph{position:relative;width:56px;height:56px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;flex:none}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sos{width:100%;background:#b91c1c;color:#fff;border:0;border-radius:10px;padding:13px;font:inherit;font-weight:700;margin-bottom:12px;cursor:pointer}
+.alr{background:#b91c1c;color:#fff;padding:6px 0;margin:8px -16px -10px;padding-left:16px;padding-right:16px}
+.ar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0}

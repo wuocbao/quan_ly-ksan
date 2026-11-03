@@ -147,13 +147,13 @@ function render(){
   const body=tab==='ph'?roomsHTML():tab==='od'?ordersHTML():tab==='ch'?chatTabHTML():tab==='qr'?qrHTML():tab==='ca'?caHTML():tab==='dt'?doanhThuHTML():tab==='lc'?'<h3>Lịch sử ca làm</h3>'+caTable(S.ca):nvHTML();
   app.innerHTML='<header><div class="hd"><b>🏨 Khách sạn</b><span class="sp"></span><span class="mut">'+esc(cur.n)+' ('+(cur.r==='QL'?'Quản lý':'Nhân viên')+')</span>'+
    (cur.r==='NV'?'<span class="bd '+(inCa()?'s0':'s1')+'">'+(inCa()?'Đang trong ca':'Chưa vào ca')+'</span>':'')+
-   '<button class="bt sm" onclick="logout()">Đăng xuất</button></div><nav>'+tabs.map(t=>'<button class="'+(t[0]===tab?'on':'')+'" onclick="tab=\''+t[0]+'\';render()">'+t[1]+(t[2]?' <span class="bd s2">'+t[2]+'</span>':'')+'</button>').join('')+'</nav></header>'+(DB?'':'<p class="mut" style="padding:6px 16px;margin:0">⚠ Chưa kết nối dữ liệu dùng chung: đơn và chat chỉ hiện trên thiết bị này.</p>')+'<main>'+body+'</main>';paintMsgs();
+   '<button class="bt sm" onclick="logout()">Đăng xuất</button></div><nav>'+tabs.map(t=>'<button class="'+(t[0]===tab?'on':'')+'" onclick="tab=\''+t[0]+'\';render()">'+t[1]+(t[2]?' <span class="bd s2">'+t[2]+'</span>':'')+'</button>').join('')+'</nav>'+alertBar()+'</header>'+(DB?'':'<p class="mut" style="padding:6px 16px;margin:0">⚠ Chưa kết nối dữ liệu dùng chung: đơn và chat chỉ hiện trên thiết bị này.</p>')+'<main>'+body+'</main>';paintMsgs();
 }
 /* ---------- gọi món + chat (dùng chung qua db) ---------- */
 const BASE=location.href.split('#')[0];
-const MENU=[['cf','Cà phê sữa',30000],['td','Trà đào',35000],['ns','Nước suối',15000],['cc','Coca-Cola',25000],['bi','Bia',35000],['bm','Bánh mì',30000],['pho','Phở bò',65000],['com','Cơm gà',70000],['mx','Mì xào hải sản',75000],['tc','Trái cây',45000]];
+const MENU=[['cf','Cà phê sữa',30000,'☕'],['td','Trà đào',35000,'🧋'],['ns','Nước suối',15000,'💧'],['cc','Coca-Cola',25000,'🥤'],['bi','Bia',35000,'🍺'],['bm','Bánh mì',30000,'🥖'],['pho','Phở bò',65000,'🍜'],['com','Cơm gà',70000,'🍗'],['mx','Mì xào hải sản',75000,'🍝'],['tc','Trái cây',45000,'🍉']];
 const ST=['Chờ xác nhận','Đang chuẩn bị','Đã phục vụ'],SC=['s1','s3','s0'];
-let DB=null,ORD=[],CHAT=[],G=null,C=null,cart={};
+let DB=null,ORD=[],CHAT=[],ALR=[],alrInit=false,G=null,C=null,cart={};
 const newId=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const unread=r=>CHAT.some(m=>m.room===r&&m.from==='khach'&&m.t>((S.seen||{})[r]||0));
 const unreadN=()=>[...new Set(CHAT.map(m=>m.room))].filter(unread).length;
@@ -164,11 +164,11 @@ async function initDB(){
   try{if(window.FIREBASE_CONFIG&&window.firebase){firebase.initializeApp(FIREBASE_CONFIG);DB=firebase.firestore()}}catch(e){console.error(e);DB=null}
   if(!DB){render();return}
   const sub=(col,fn)=>DB.collection(col).onSnapshot(s=>{fn(s.docs.map(d=>d.data()));refresh()},()=>{});
-  sub('orders',a=>ORD=a);sub('chat',a=>CHAT=a);render();
+  sub('orders',a=>ORD=a);sub('chat',a=>CHAT=a);sub('alerts',a=>{if(alrInit&&!G&&cur){const old=new Set(ALR.map(x=>x.id));if(a.some(x=>x.st===0&&!old.has(x.id)))beep()}alrInit=true;ALR=a});render();
 }
 function put(col,o){
-  if(DB){DB.collection(col).doc(o.id).set(o).catch(()=>toast('Không gửi được, vui lòng thử lại'));return}
-  const L=col==='orders'?ORD:CHAT,i=L.findIndex(x=>x.id===o.id);
+  if(DB){try{DB.collection(col).doc(o.id).set(o).catch(e=>{console.error(e);toast('Không gửi được: '+(e.code||e.message))})}catch(e){console.error(e);toast('Không gửi được: '+(e.code||e.message))}return}
+  const L=col==='orders'?ORD:col==='chat'?CHAT:ALR,i=L.findIndex(x=>x.id===o.id);
   if(i<0)L.push(o);else L[i]=o;
   S[col]=L;save();refresh();
 }
@@ -187,20 +187,20 @@ function guiChat(who,room){
   document.getElementById('ci').value='';
 }
 function ordList(L){
-  return L.length?L.map(o=>'<div class="card" style="margin-bottom:8px"><div class="top"><span class="mut">'+fmtT(o.t)+'</span><span class="bd '+SC[o.st]+'">'+ST[o.st]+'</span></div><div class="gi">'+o.items.map(i=>i[1]+' × '+esc(i[0])).join(', ')+'</div><b>'+money(o.tot)+'</b></div>').join(''):'<p class="mut">Bạn chưa gọi món nào.</p>';
+  return L.length?L.map(o=>'<div class="card" style="margin-bottom:8px"><div class="top"><span class="mut">'+fmtT(o.t)+'</span><span class="bd '+SC[o.st]+'">'+ST[o.st]+'</span></div><div class="gi">'+o.items.map(i=>i.q+' × '+esc(i.n)).join(', ')+'</div><b>'+money(o.tot)+'</b></div>').join(''):'<p class="mut">Bạn chưa gọi món nào.</p>';
 }
 /* --- khách --- */
 function qty(id,d){cart[id]=Math.max(0,(cart[id]||0)+d);render()}
 function guiDon(){
-  const items=MENU.filter(m=>cart[m[0]]).map(m=>[m[1],cart[m[0]],m[2]]);
+  const items=MENU.filter(m=>cart[m[0]]).map(m=>({n:m[1],q:cart[m[0]],p:m[2]}));
   if(!items.length){toast('Hãy chọn món trước');return}
-  put('orders',{id:newId('o'),room:G,items,tot:items.reduce((t,i)=>t+i[1]*i[2],0),t:Date.now(),st:0});
+  put('orders',{id:newId('o'),room:G,items,tot:items.reduce((t,i)=>t+i.q*i.p,0),t:Date.now(),st:0});
   cart={};toast('Đã gửi đơn! Nhân viên sẽ phục vụ sớm.');render();
 }
 function guestHTML(){
   const tot=MENU.reduce((t,m)=>t+(cart[m[0]]||0)*m[2],0);
   return '<header><div class="hd"><b>🏨 Khách sạn</b><span class="sp"></span><span class="mut">Phòng '+G+'</span></div></header>'+(DB?'':'<p class="mut" style="padding:6px 16px;margin:0">⚠ Chưa kết nối dữ liệu dùng chung: đơn và chat chỉ hiện trên thiết bị này.</p>')+
-   '<main><div class="card"><h3>🍽️ Gọi đồ ăn uống</h3>'+MENU.map(m=>'<div class="top" style="padding:6px 0"><span>'+m[1]+'<br><span class="mut">'+money(m[2])+'</span></span><span><button class="bt sm" onclick="qty(\''+m[0]+'\',-1)">−</button> <b>'+(cart[m[0]]||0)+'</b> <button class="bt sm" onclick="qty(\''+m[0]+'\',1)">+</button></span></div>').join('')+
+   '<main><button class="sos" onclick="baoKC()">🚨 Báo khẩn cấp</button>'+guestAlerts()+'<div class="card"><h3>🍽️ Gọi đồ ăn uống</h3>'+MENU.map(m=>'<div class="top" style="padding:6px 0;gap:10px"><span class="ph">'+m[3]+'<img src="images/'+m[0]+'.jpg" alt="" onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\'images/'+m[0]+'.png\'}else this.remove()"></span><span style="flex:1">'+m[1]+'<br><span class="mut">'+money(m[2])+'</span></span><span><button class="bt sm" onclick="qty(\''+m[0]+'\',-1)">−</button> <b>'+(cart[m[0]]||0)+'</b> <button class="bt sm" onclick="qty(\''+m[0]+'\',1)">+</button></span></div>').join('')+
    '<div class="top" style="margin-top:10px"><b>Tổng: '+money(tot)+'</b><button class="bt pr" onclick="guiDon()">Gửi đơn</button></div></div>'+
    '<h3 style="margin-top:16px">Đơn của bạn</h3>'+ordList(ORD.filter(o=>o.room===G).sort((a,b)=>b.t-a.t))+chatBox(G,'khach')+'</main>';
 }
@@ -216,7 +216,7 @@ function doiDon(id,st){
 function ordersHTML(){
   const L=ORD.slice().sort((a,b)=>a.st-b.st||a.t-b.t);
   if(!L.length)return '<p class="mut">Chưa có đơn gọi món nào.</p>';
-  return '<div class="grid">'+L.map(o=>'<div class="card"><div class="top"><b>Phòng '+o.room+'</b><span class="bd '+SC[o.st]+'">'+ST[o.st]+'</span></div><div class="mut">'+fmtT(o.t)+'</div><div class="gi">'+o.items.map(i=>i[1]+' × '+esc(i[0])).join('<br>')+'</div><b>'+money(o.tot)+'</b><div class="act">'+
+  return '<div class="grid">'+L.map(o=>'<div class="card"><div class="top"><b>Phòng '+o.room+'</b><span class="bd '+SC[o.st]+'">'+ST[o.st]+'</span></div><div class="mut">'+fmtT(o.t)+'</div><div class="gi">'+o.items.map(i=>i.q+' × '+esc(i.n)).join('<br>')+'</div><b>'+money(o.tot)+'</b><div class="act">'+
    (o.st===0?'<button class="bt pr sm" onclick="doiDon(\''+o.id+'\',1)">Nhận đơn</button>':o.st===1?'<button class="bt pr sm" onclick="doiDon(\''+o.id+'\',2)">Đã phục vụ</button>':'')+
    '<button class="bt sm" onclick="tab=\'ch\';C='+o.room+';render()">Chat</button></div></div>').join('')+'</div>';
 }
@@ -232,5 +232,27 @@ function qrSvg(url){
 function qrHTML(){
   return '<p class="mut">In mã QR dán trong từng phòng. Khách quét sẽ vào trang gọi đồ và chat của đúng phòng đó.</p><div class="grid">'+S.rooms.map(r=>'<div class="card qr" style="text-align:center"><b>Phòng '+r.ma+'</b><div style="background:#fff;padding:6px;border-radius:8px;margin-top:8px">'+qrSvg(BASE+'#phong-'+r.ma)+'</div></div>').join('')+'</div>';
 }
+function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator();o.frequency.value=880;o.connect(c.destination);o.start();setTimeout(()=>{o.stop();c.close()},700)}catch(e){}}
+function baoKC(){
+  if(ALR.some(a=>a.room===G&&a.st<2&&Date.now()-a.t<60000)){toast('Bạn vừa gửi báo khẩn cấp, nhân viên đang đến');return}
+  modal('🚨 Báo khẩn cấp phòng '+G,'<label>Loại sự cố<select id="f1"><option>Cấp cứu y tế</option><option>Cháy / khói</option><option>An ninh / có người lạ</option><option>Cần hỗ trợ gấp</option></select></label><label>Ghi chú (không bắt buộc)<input id="f2"></label><p class="mut">Nguy hiểm đến tính mạng: gọi ngay 115 (cấp cứu), 114 (cứu hỏa), 113 (công an).</p>',()=>{
+    put('alerts',{id:newId('a'),room:G,type:val('f1'),note:val('f2'),t:Date.now(),st:0,by:''});
+    toast('Đã gửi báo khẩn cấp! Nhân viên sẽ đến ngay.');
+  },'Gửi báo khẩn cấp');
+}
+function guestAlerts(){
+  const L=ALR.filter(a=>a.room===G&&a.st<2);
+  return L.length?'<div class="card" style="margin-bottom:12px;border-color:#b91c1c">'+L.map(a=>'🚨 '+esc(a.type)+' ('+fmtT(a.t)+'): '+(a.st===1?'<b>nhân viên đã tiếp nhận</b>':'đang chờ nhân viên')).join('<br>')+'</div>':'';
+}
+function doiAlert(id,st){
+  const a=ALR.find(x=>x.id===id);if(!a)return;
+  put('alerts',Object.assign({},a,{st,by:(st===1||!a.by)?cur.n:a.by}));
+}
+function alertBar(){
+  const L=ALR.filter(a=>a.st<2).sort((a,b)=>a.t-b.t);
+  document.title=(L.length?'🚨 ('+L.length+') ':'')+'Quản lý khách sạn';
+  if(!L.length)return '';
+  return '<div class="alr">'+L.map(a=>'<div class="ar"><div><b>🚨 KHẨN CẤP – Phòng '+a.room+'</b> · '+esc(a.type)+(a.note?' · '+esc(a.note):'')+'<br><small>'+fmtT(a.t)+' · '+(a.st===1?'Đã tiếp nhận bởi '+esc(a.by):'Chưa xử lý')+'</small></div><div class="act" style="margin:0">'+(a.st===0?'<button class="bt sm" onclick="doiAlert(\''+a.id+'\',1)">Tiếp nhận</button>':'')+'<button class="bt sm" onclick="doiAlert(\''+a.id+'\',2)">Đã xử lý</button></div></div>').join('')+'</div>';
+}
 window.addEventListener('hashchange',()=>{readHash();render()});
-load();ORD=S.orders||[];CHAT=S.chat||[];readHash();render();initDB();
+load();ORD=S.orders||[];CHAT=S.chat||[];ALR=S.alerts||[];readHash();render();initDB();
