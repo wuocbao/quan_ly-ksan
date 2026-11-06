@@ -3,19 +3,203 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Quản lý khách sạn</title>
+<title>MY HOTEL</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏨</text></svg>">
-<link rel="stylesheet" href="style.css">
+<style>
+:root{--navy:#10304f;--navy2:#0b2239;--gold:#c9a24d;--tx:#1d2733;--mut:#5d6b7a;--bg:#f6f3ec;--card:#fff;--bd:#e6e0d2}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tx);background:var(--bg)}
+h1,h2,h3,.brand b{font-family:Georgia,"Times New Roman",serif;font-weight:600}
+a{color:inherit;text-decoration:none}
+header{position:sticky;top:0;z-index:20;background:var(--navy);color:#e8edf3;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.bar{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:22px}
+.brand{flex:none;display:flex;align-items:center;gap:10px;color:#fff}.brand b{font-size:24px;line-height:1}.brand small{display:block;font-size:13px;opacity:.8;letter-spacing:.5px}
+nav{display:flex;gap:6px 20px;align-items:center;flex:1;min-width:0;flex-wrap:wrap;justify-content:center}
+nav a{flex:none}
+nav a{padding:4px 0;border-bottom:2px solid transparent;font-family:Georgia,serif}nav a:hover{color:var(--gold);border-color:var(--gold)}
+.btn{display:inline-block;border:0;border-radius:999px;padding:11px 22px;font:inherit;font-weight:700;cursor:pointer;background:var(--gold);color:#1b1405}
+.btn.ghost{background:transparent;color:#fff;border:1.5px solid #fff}
+#mb{display:none;background:none;border:1px solid #fff5;color:#fff;border-radius:8px;padding:6px 10px;font-size:20px;margin-left:auto}
+.hero{min-height:78vh;display:flex;align-items:center;color:#fff;text-align:center;
+background:linear-gradient(180deg,rgba(11,34,57,.5),rgba(11,34,57,.8)),url(images/hero.jpg) center/cover,linear-gradient(135deg,#2a86b3,#0b2239)}
+.hero div{max-width:760px;margin:0 auto;padding:40px 20px}
+.hero h1{font-size:clamp(34px,6vw,58px);margin:0 0 12px}.hero p{font-size:18px;opacity:.92;margin:0 0 26px}
+.hero .btn{margin:4px}
+section{padding:64px 20px}section>.in{max-width:1100px;margin:0 auto}
+.alt{background:#fff}
+h2{font-size:32px;text-align:center;margin:0 0 6px;color:var(--navy)}
+.sub{text-align:center;color:var(--mut);margin:0 0 34px}
+h2::after{content:"";display:block;width:56px;height:3px;background:var(--gold);margin:10px auto 0}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.c{transition:transform .2s,box-shadow .2s}.c:hover{transform:translateY(-4px);box-shadow:0 12px 26px rgba(16,48,79,.14)}
+.stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}.stats span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:6px 16px;font-size:14px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:22px;text-align:center}
+.alt .c{background:var(--bg)}
+.c .ic{font-size:38px}.c h3{margin:8px 0 6px;color:var(--navy)}.c p{margin:0;color:var(--mut);font-size:15px}
+.tag{display:inline-block;background:var(--gold);color:#1b1405;border-radius:999px;font-size:12px;font-weight:700;padding:2px 10px}
+.price{font-size:22px;color:var(--navy);font-weight:700;margin:8px 0}.price small{font-weight:400;color:var(--mut);font-size:14px}
+.room .top{height:150px;border-radius:10px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;font-size:56px;color:#fff;background:linear-gradient(135deg,#3b8fb8,#10304f)}
+.room.vip .top{background:linear-gradient(135deg,#d9b65f,#7a5a14)}
+.im{position:relative;height:160px;border-radius:10px;margin-bottom:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:48px;color:#fff;background:linear-gradient(135deg,#3b8fb8,#10304f)}
+.im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.room .im{height:190px}.room.vip .im{background:linear-gradient(135deg,#d9b65f,#7a5a14)}
+.lk{display:flex;gap:10px;max-width:520px;margin:0 auto 18px}
+input,select,textarea{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:#fff;color:var(--tx)}
+#rs{max-width:520px;margin:0 auto;text-align:left}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--bd)}
+dialog{border:0;border-radius:16px;width:min(440px,92vw);padding:22px}dialog::backdrop{background:rgba(0,0,0,.5)}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#msg{min-height:20px;font-size:14px;margin-top:8px}
+footer{background:var(--navy2);color:#b7c3d0;text-align:center;padding:26px 20px;font-size:14px}
+.hdbtn{flex:none;white-space:nowrap}
+@media(max-width:1100px){nav{gap:14px;font-size:14px}.brand small{display:none}.hdbtn{padding:9px 14px}}
+@media(max-width:700px){.bar{gap:8px 12px;padding:10px 14px;flex-wrap:wrap}nav{flex:none;width:100%;justify-content:flex-start}.hdbtn{display:none}.brand b{font-size:20px}}
+</style>
 </head>
 <body>
-<div id="app"></div>
-<dialog id="dlg"></dialog>
-<div id="toast"></div>
+<header>
+ <div class="bar">
+  <a class="brand" href="#home">
+   <svg width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#c9a24d" stroke-width="2" stroke-linecap="round"><path d="M10 34V16l8-6 8 6v18M26 34V22l8 4v8M4 40c4-3 8-3 12 0s8 3 12 0 8-3 12 0"/><path d="M14 20h4M14 26h4"/></svg>
+   <span><b>MY HOTEL</b><small>Hotel &amp; Resort</small></span>
+  </a>
+  <nav id="nv">
+   <a href="#home">Trang chủ</a><a href="#danhmuc">Danh mục</a><a href="#uudai">Ưu đãi</a><a href="#phong">Phòng &amp; Suite</a><a href="#dichvu">Dịch vụ</a><a href="#hoadon">Tra cứu hóa đơn</a><a href="#chinhanh">Chi nhánh</a><a href="#lienhe">Liên hệ</a><a href="quantri.html">Trang quản trị</a>
+  </nav>
+  <button class="btn hdbtn" onclick="openBook()">📅 Đặt phòng</button>
+ </div>
+</header>
+
+<div class="hero" id="home"><div>
+ <h1>Kỳ nghỉ trọn vẹn bên bờ biển</h1>
+ <p>Phòng nghỉ sang trọng, ẩm thực tinh tế và dịch vụ tận tâm 24/7.</p>
+ <button class="btn" onclick="openBook()">Đặt phòng ngay</button>
+ <a class="btn ghost" href="#phong">Xem phòng</a>
+ <div class="stats"><span>🛏️ 25 phòng nghỉ</span><span>🕒 Phục vụ 24/7</span><span>📱 Gọi món qua QR</span></div>
+</div></div>
+
+<section id="danhmuc" class="alt"><div class="in">
+ <h2>Danh mục</h2><p class="sub">Trải nghiệm nổi bật tại resort</p>
+ <div class="g">
+  <div class="c"><div class="im"><span>🛏️</span><img src="images/danhmuc-nghiduong.jpg" alt="Nghỉ dưỡng" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/danhmuc-nghiduong.png'}else this.remove()"></div><h3>Nghỉ dưỡng</h3><p>Phòng rộng rãi, view biển, đầy đủ tiện nghi.</p></div>
+  <div class="c"><div class="im"><span>🍽️</span><img src="images/danhmuc-amthuc.jpg" alt="Ẩm thực" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/danhmuc-amthuc.png'}else this.remove()"></div><h3>Ẩm thực</h3><p>Gọi món tại phòng bằng mã QR, phục vụ nhanh.</p></div>
+  <div class="c"><div class="im"><span>💆</span><img src="images/danhmuc-spa.jpg" alt="Spa &amp; Thư giãn" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/danhmuc-spa.png'}else this.remove()"></div><h3>Spa &amp; Thư giãn</h3><p>Liệu trình chăm sóc sức khỏe và sắc đẹp.</p></div>
+  <div class="c"><div class="im"><span>🎉</span><img src="images/danhmuc-sukien.jpg" alt="Sự kiện" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/danhmuc-sukien.png'}else this.remove()"></div><h3>Sự kiện</h3><p>Tiệc cưới, hội nghị, team building.</p></div>
+ </div>
+</div></section>
+
+<section id="uudai"><div class="in">
+ <h2>Ưu đãi</h2><p class="sub">Nội dung mẫu, hãy sửa lại theo chương trình thực tế</p>
+ <div class="g">
+  <div class="c"><span class="tag">-15%</span><h3>Ở từ 3 đêm</h3><p>Giảm 15% tiền phòng khi đặt từ 3 đêm liên tiếp.</p></div>
+  <div class="c"><span class="tag">Tặng</span><h3>Bữa sáng miễn phí</h3><p>Tặng bữa sáng cho phòng VIP đặt trực tuyến.</p></div>
+  <div class="c"><span class="tag">Mới</span><h3>Gọi món qua QR</h3><p>Quét mã trong phòng, nhân viên mang món đến tận nơi.</p></div>
+ </div>
+</div></section>
+
+<section id="phong" class="alt"><div class="in">
+ <h2>Phòng &amp; Suite</h2><p class="sub">Giá theo ngày hoặc theo giờ</p>
+ <div class="g">
+  <div class="c room"><div class="im"><span>🛏️</span><img src="images/phong-thuong.jpg" alt="Phòng Thường" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/phong-thuong.png'}else this.remove()"></div><h3>Phòng Thường</h3><p>15 phòng · tiện nghi cơ bản, thoải mái.</p>
+   <div class="price">300.000 ₫ <small>/ ngày</small></div><p>hoặc 60.000 ₫ / giờ</p><br><button class="btn" onclick="openBook('Thường')">Đặt phòng</button></div>
+  <div class="c room vip"><div class="im"><span>👑</span><img src="images/phong-vip.jpg" alt="Phòng VIP Suite" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/phong-vip.png'}else this.remove()"></div><h3>Phòng VIP Suite</h3><p>10 phòng · không gian rộng, dịch vụ cao cấp.</p>
+   <div class="price">600.000 ₫ <small>/ ngày</small></div><p>hoặc 120.000 ₫ / giờ</p><br><button class="btn" onclick="openBook('VIP')">Đặt phòng</button></div>
+ </div>
+</div></section>
+
+<section id="dichvu"><div class="in">
+ <h2>Dịch vụ</h2><p class="sub">Luôn sẵn sàng phục vụ bạn</p>
+ <div class="g">
+  <div class="c"><div class="im"><span>📱</span><img src="images/dichvu-qr.jpg" alt="Gọi món bằng QR" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/dichvu-qr.png'}else this.remove()"></div><h3>Gọi món bằng QR</h3><p>Quét mã QR dán trong phòng để xem menu và gọi đồ.</p></div>
+  <div class="c"><div class="im"><span>💬</span><img src="images/dichvu-chat.jpg" alt="Chat với lễ tân" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/dichvu-chat.png'}else this.remove()"></div><h3>Chat với lễ tân</h3><p>Nhắn tin trực tiếp ngay trên trang gọi món.</p></div>
+  <div class="c"><div class="im"><span>🚨</span><img src="images/dichvu-khancap.jpg" alt="Báo khẩn cấp" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/dichvu-khancap.png'}else this.remove()"></div><h3>Báo khẩn cấp</h3><p>Một nút bấm, nhân viên và quản lý nhận tin ngay.</p></div>
+  <div class="c"><div class="im"><span>🧺</span><img src="images/dichvu-giatui.jpg" alt="Giặt ủi" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/dichvu-giatui.png'}else this.remove()"></div><h3>Giặt ủi</h3><p>Dịch vụ giặt ủi nhanh, tính vào phụ phí phòng.</p></div>
+ </div>
+</div></section>
+
+<section id="hoadon" class="alt"><div class="in">
+ <h2>Tra cứu hóa đơn</h2><p class="sub">Nhập mã hóa đơn nhận được khi trả phòng</p>
+ <div class="lk"><input id="hc" placeholder="Ví dụ: HDLX2K9A3F" onkeydown="if(event.key==='Enter')tra()"><button class="btn" onclick="tra()">Tra cứu</button></div>
+ <div id="rs"></div>
+</div></section>
+
+<section id="chinhanh"><div class="in">
+ <h2>Chi nhánh</h2><p class="sub">Địa chỉ mẫu, hãy thay bằng địa chỉ thật</p>
+ <div class="g">
+  <div class="c"><div class="im"><span>📍</span><img src="images/chinhanh-1.jpg" alt="Chi nhánh 1" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/chinhanh-1.png'}else this.remove()"></div><h3>Chi nhánh 1</h3><p>Quận 1, TP. Hồ Chí Minh</p></div>
+  <div class="c"><div class="im"><span>📍</span><img src="images/chinhanh-2.jpg" alt="Chi nhánh 2" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/chinhanh-2.png'}else this.remove()"></div><h3>Chi nhánh 2</h3><p>Vũng Tàu</p></div>
+  <div class="c"><div class="im"><span>📍</span><img src="images/chinhanh-3.jpg" alt="Chi nhánh 3" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.src='images/chinhanh-3.png'}else this.remove()"></div><h3>Chi nhánh 3</h3><p>Nha Trang</p></div>
+ </div>
+</div></section>
+
+<section id="lienhe" class="alt"><div class="in">
+ <h2>Liên hệ</h2><p class="sub">Thông tin mẫu, hãy thay bằng thông tin thật</p>
+ <div class="g">
+  <div class="c"><div class="ic">📞</div><h3>Hotline</h3><p>0900 000 000</p></div>
+  <div class="c"><div class="ic">✉️</div><h3>Email</h3><p>lienhe@myhotel.vn</p></div>
+  <div class="c"><div class="ic">🕒</div><h3>Lễ tân</h3><p>Phục vụ 24/7</p></div>
+ </div>
+</div></section>
+
+<footer>© 2026 MY HOTEL · <a href="quantri.html" style="text-decoration:underline">Trang quản trị</a></footer>
+
+<dialog id="dlg">
+ <h3 style="margin:0 0 4px;font-family:Georgia,serif">Đặt phòng</h3>
+ <label>Họ tên<input id="bn"></label>
+ <label>Số điện thoại<input id="bs" type="tel"></label>
+ <div class="f2"><div><label>Loại phòng<select id="bl"><option value="Thường">Thường</option><option value="VIP">VIP Suite</option></select></label></div>
+ <div><label>Số đêm<input id="bm" type="number" min="1" value="1"></label></div></div>
+ <label>Ngày nhận phòng<input id="bd" type="date"></label>
+ <label>Ghi chú (không bắt buộc)<input id="bt"></label>
+ <div id="msg"></div>
+ <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn ghost" style="color:#1d2733;border-color:#ccc" onclick="dlg.close()">Đóng</button><button class="btn" id="bk" onclick="sendBook()">Gửi yêu cầu</button></div>
+</dialog>
 
 <script src="config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="app.js"></script>
+<script>
+const $=id=>document.getElementById(id),dlg=$('dlg');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>Math.round(n).toLocaleString('vi-VN')+' ₫';
+let DB=null;
+try{if(window.FIREBASE_CONFIG&&window.firebase){firebase.initializeApp(FIREBASE_CONFIG);DB=firebase.firestore()}}catch(e){console.error(e)}
+function openBook(l){
+  if(l)$('bl').value=l;
+  $('bd').min=$('bd').value=new Date().toLocaleDateString('en-CA');
+  $('msg').textContent='';dlg.showModal();
+}
+async function sendBook(){
+  const m=$('msg'),ten=$('bn').value.trim(),sdt=$('bs').value.trim(),dem=parseInt($('bm').value),ngay=$('bd').value;
+  m.style.color='#b91c1c';
+  if(!ten||!/^[0-9+\s]{8,15}$/.test(sdt)||!(dem>0)||!ngay){m.textContent='Vui lòng nhập đủ họ tên, số điện thoại hợp lệ, ngày và số đêm.';return}
+  if(!DB){m.textContent='Chưa kết nối hệ thống, vui lòng gọi hotline để đặt phòng.';return}
+  $('bk').disabled=true;
+  try{
+    const id='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    await DB.collection('bookings').doc(id).set({id,ten,sdt,loai:$('bl').value,ngay,dem,note:$('bt').value.trim(),t:Date.now(),st:0});
+    m.style.color='#15803d';m.textContent='Đã gửi yêu cầu! Lễ tân sẽ liên hệ bạn sớm.';
+    ['bn','bs','bt'].forEach(i=>$(i).value='');
+  }catch(e){console.error(e);m.textContent='Không gửi được ('+(e.code||'lỗi')+'), vui lòng thử lại.'}
+  $('bk').disabled=false;
+}
+async function tra(){
+  const code=$('hc').value.trim().toUpperCase(),r=$('rs');
+  if(!code){r.innerHTML='';return}
+  if(!DB){r.innerHTML='<p style="text-align:center;color:#b91c1c">Chưa kết nối hệ thống, vui lòng liên hệ lễ tân.</p>';return}
+  r.innerHTML='<p style="text-align:center">Đang tra cứu…</p>';
+  try{
+    const d=await DB.collection('invoices').doc(code).get();
+    if(!d.exists){r.innerHTML='<p style="text-align:center;color:#b91c1c">Không tìm thấy hóa đơn với mã này.</p>';return}
+    const v=d.data();
+    r.innerHTML='<div class="c" style="text-align:left"><h3 style="margin-top:0">Hóa đơn '+esc(v.code)+'</h3>'+
+     '<div class="row"><span>Khách hàng</span><b>'+esc(v.ten)+'</b></div><div class="row"><span>Phòng</span><b>'+esc(v.room)+' ('+esc(v.loai)+')</b></div>'+
+     '<div class="row"><span>Thanh toán lúc</span><b>'+new Date(v.t).toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'})+'</b></div>'+
+     '<div class="row"><span>Tiền phòng</span><b>'+money(v.tp)+'</b></div><div class="row"><span>Phụ phí dịch vụ</span><b>'+money(v.pp)+'</b></div>'+
+     '<div class="row" style="border:0;font-size:18px"><span>Tổng cộng</span><b style="color:var(--navy)">'+money(v.tong)+'</b></div></div>';
+  }catch(e){console.error(e);r.innerHTML='<p style="text-align:center;color:#b91c1c">Không tra cứu được ('+esc(e.code||'lỗi')+').</p>'}
+}
+</script>
 </body>
 </html>

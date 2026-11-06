@@ -11,6 +11,13 @@ Website quản lý khách sạn chạy hoàn toàn trên trình duyệt (HTML + 
 
 Tài khoản mẫu: `admin` / `admin123` (quản lý), `nhanvien1` / `123456` (nhân viên).
 
+## Trang khách hàng
+`index.html` là trang chủ kiểu resort: Trang chủ, Danh mục, Ưu đãi, Phòng & Suite, Dịch vụ, Tra cứu hóa đơn, Chi nhánh, Liên hệ. Nút **Đặt phòng** gửi yêu cầu vào tab *Đặt online* của nhân viên. Khi check-out, nhân viên đưa **mã hóa đơn** cho khách để tra cứu tại mục *Tra cứu hóa đơn*. Ảnh nền: upload `images/hero.jpg`. Các mục Ưu đãi, Chi nhánh, Liên hệ đang là nội dung mẫu, hãy sửa trong `index.html`.
+Trang quản trị nằm ở `.../quantri.html`; mã QR trong phòng tự trỏ về trang này.
+
+## Ảnh thật
+Tất cả ảnh đặt trong thư mục `images/`, tên file xem trong `images/README.txt` (ảnh nền, danh mục, phòng, dịch vụ, chi nhánh, món ăn). Thiếu ảnh thì trang tự hiện nền màu kèm biểu tượng.
+
 ## Ảnh món ăn
 Mỗi món có biểu tượng emoji mặc định. Muốn dùng ảnh thật, tạo thư mục `images/` cùng cấp với `index.html` và upload ảnh đặt tên theo mã món: `cf`, `td`, `ns`, `cc`, `bi`, `bm`, `pho`, `com`, `mx`, `tc` (đuôi `.jpg` hoặc `.png`), ví dụ `images/pho.jpg`. Món nào thiếu ảnh sẽ tự hiện emoji.
 
@@ -19,7 +26,8 @@ Khách bấm nút đỏ trên trang gọi đồ, một banner đỏ kèm tiếng
 
 ## Cấu trúc
 ```
-index.html   giao diện chính
+index.html   trang chủ cho khách hàng (đặt phòng, tra cứu hóa đơn)
+quantri.html trang quản trị cho nhân viên / quản lý (đăng nhập)
 style.css    kiểu dáng (có chế độ sáng/tối)
 app.js       toàn bộ logic
 config.js    cấu hình Firebase (tùy chọn)
@@ -53,6 +61,8 @@ GitHub Pages chỉ chứa file tĩnh, không có máy chủ. Mặc định (`FIR
        match /orders/{id} { allow read, write: if true; }
        match /chat/{id}   { allow read, write: if true; }
        match /alerts/{id} { allow read, write: if true; }
+       match /bookings/{id} { allow read, write: if true; }
+       match /invoices/{id} { allow get: if true; allow create: if true; }
      }
    }
    ```

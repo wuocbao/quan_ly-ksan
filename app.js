@@ -68,8 +68,10 @@ function checkOut(ma){
   modal('Check-out phòng '+ma,'<p>'+esc(k.ten)+' · '+esc(k.sdt)+'<br><span class="mut">Nhận phòng: '+fmtD(k.ngay)+'</span></p><label>Số '+dv+' thực tế đã ở<input id="sl" type="number" min="1" value="'+k.sl+'" oninput="_c()"></label><div class="inv" id="hd"></div>',()=>{
     const n=parseInt(val('sl'));if(!(n>0)){toast('Số lượng không hợp lệ');return false}
     const tp=n*dg;
-    S.dt.push({t:Date.now(),ma,loai:r.loai,ten:k.ten,tp,pp:k.pp,tong:tp+k.pp,u:cur.u});
-    r.tt=0;r.k=null;save();render();toast('Check-out thành công. Phòng '+ma+' đã trống');
+    const code=('HD'+Date.now().toString(36)+Math.random().toString(36).slice(2,4)).toUpperCase(),inv={t:Date.now(),ma,loai:r.loai,ten:k.ten,tp,pp:k.pp,tong:tp+k.pp,u:cur.u,code};
+    S.dt.push(inv);
+    if(DB){try{DB.collection('invoices').doc(code).set({code,room:ma,loai:r.loai,ten:k.ten,t:inv.t,tp,pp:k.pp,tong:inv.tong}).catch(e=>console.error(e))}catch(e){console.error(e)}}
+    r.tt=0;r.k=null;save();render();setTimeout(()=>modal('Check-out thành công','<p>Phòng '+ma+' đã trống.</p><p>Mã tra cứu hóa đơn cho khách'+(DB?'':' (chỉ tra cứu được khi đã bật Firebase)')+':<br><b style="font-size:20px">'+code+'</b></p>',()=>{},'Đóng'),0);
   },'Thanh toán');
   _c();
 }
@@ -96,8 +98,10 @@ function themNV(){
 }
 
 /* ---------- giao diện ---------- */
+const LOGO='<svg width="38" height="38" viewBox="0 0 48 48" fill="none" stroke="#c9a24d" stroke-width="2" stroke-linecap="round"><path d="M10 34V16l8-6 8 6v18M26 34V22l8 4v8M4 40c4-3 8-3 12 0s8 3 12 0 8-3 12 0"/><path d="M14 20h4M14 26h4"/></svg>';
+const BRAND='<a class="brand" href="#" onclick="return false">'+LOGO+'<b>MY HOTEL</b></a>';
 function loginHTML(){
-  return '<div class="login card"><h3>🏨 Quản lý khách sạn</h3><p class="mut">Đăng nhập để tiếp tục</p><label>Tên đăng nhập<input id="lu" autocomplete="username"></label><label>Mật khẩu<input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')login()"></label><div class="err" id="le"></div><button class="bt pr" style="width:100%" onclick="login()">Đăng nhập</button><p class="mut" style="margin-top:14px">Tài khoản mẫu:<br>Quản lý: admin / admin123<br>Nhân viên: nhanvien1 / 123456</p></div>';
+  return '<div class="lg"><div class="login card"><div class="lbrand">'+LOGO+'<h3>MY HOTEL</h3></div><p class="mut" style="text-align:center">Đăng nhập hệ thống quản trị</p><label>Tên đăng nhập<input id="lu" autocomplete="username"></label><label>Mật khẩu<input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')login()"></label><div class="err" id="le"></div><button class="bt pr" style="width:100%" onclick="login()">Đăng nhập</button><p class="mut" style="margin-top:14px">Tài khoản mẫu:<br>Quản lý: admin / admin123<br>Nhân viên: nhanvien1 / 123456</p></div></div>';
 }
 function roomsHTML(){
   const L=S.rooms.filter(r=>(F.tt===''||r.tt==F.tt)&&(!F.loai||r.loai===F.loai)&&(!F.gia||r.gn<=+F.gia));
@@ -112,7 +116,7 @@ function roomsHTML(){
   if(!L.length)return f+'<p class="mut">Không có phòng phù hợp.</p>';
   return f+'<div class="grid">'+L.map(r=>{
     const k=r.k,b=r.tt===0?'<button class="bt pr sm" onclick="datPhong('+r.ma+')">Đặt phòng</button>':r.tt===1?'<button class="bt pr sm" onclick="checkIn('+r.ma+')">Check-in</button>':'<button class="bt sm" onclick="dichVu('+r.ma+')">+ Dịch vụ</button><button class="bt pr sm" onclick="checkOut('+r.ma+')">Check-out</button>';
-    return '<div class="card"><div class="top"><b>Phòng '+r.ma+'</b><span class="bd s'+r.tt+'">'+TT[r.tt]+'</span></div><div class="mut">'+r.loai+' · '+money(r.gn)+'/ngày · '+money(r.gg)+'/giờ</div>'+
+    return '<div class="card r'+r.tt+'"><div class="top"><b>Phòng '+r.ma+'</b><span class="bd s'+r.tt+'">'+TT[r.tt]+'</span></div><div class="mut">'+r.loai+' · '+money(r.gn)+'/ngày · '+money(r.gg)+'/giờ</div>'+
      (k?'<div class="gi">👤 '+esc(k.ten)+' · '+esc(k.sdt)+'<br>Nhận: '+fmtD(k.ngay)+' · '+k.sl+' '+(k.kieu==='ngay'?'ngày':'giờ')+(k.pp?'<br>Phụ phí: '+money(k.pp):'')+'</div>':'')+
      '<div class="act">'+b+'</div></div>';
   }).join('')+'</div>';
@@ -141,19 +145,20 @@ function render(){
   const app=document.getElementById('app');
   if(G){app.innerHTML=guestHTML();paintMsgs();return}
   if(!cur){app.innerHTML=loginHTML();return}
-  const tabs=[['ph','Phòng'],['od','Đơn gọi món',ORD.filter(o=>o.st<2).length],['ch','Chat',unreadN()],['qr','QR phòng']];
+  const tabs=[['ph','Phòng'],['od','Đơn gọi món',ORD.filter(o=>o.st<2).length],['bk','Đặt online',BK.filter(b=>b.st===0).length],['ch','Chat',unreadN()],['qr','QR phòng']];
   if(cur.r==='NV')tabs.push(['ca','Ca làm']);else tabs.push(['dt','Doanh thu'],['lc','Lịch sử ca'],['nv','Nhân viên']);
   if(!tabs.some(t=>t[0]===tab))tab='ph';
-  const body=tab==='ph'?roomsHTML():tab==='od'?ordersHTML():tab==='ch'?chatTabHTML():tab==='qr'?qrHTML():tab==='ca'?caHTML():tab==='dt'?doanhThuHTML():tab==='lc'?'<h3>Lịch sử ca làm</h3>'+caTable(S.ca):nvHTML();
-  app.innerHTML='<header><div class="hd"><b>🏨 Khách sạn</b><span class="sp"></span><span class="mut">'+esc(cur.n)+' ('+(cur.r==='QL'?'Quản lý':'Nhân viên')+')</span>'+
+  const body=tab==='ph'?roomsHTML():tab==='od'?ordersHTML():tab==='bk'?bookingsHTML():tab==='ch'?chatTabHTML():tab==='qr'?qrHTML():tab==='ca'?caHTML():tab==='dt'?doanhThuHTML():tab==='lc'?'<h3>Lịch sử ca làm</h3>'+caTable(S.ca):nvHTML();
+  const navH='<nav>'+tabs.map(t=>'<button class="'+(t[0]===tab?'on':'')+'" onclick="tab=\''+t[0]+'\';render()">'+t[1]+(t[2]?' <span class="bd s2">'+t[2]+'</span>':'')+'</button>').join('')+'</nav>';
+  app.innerHTML='<header><div class="hd">'+BRAND+navH+'<span class="sp"></span><span class="mut">'+esc(cur.n)+' ('+(cur.r==='QL'?'Quản lý':'Nhân viên')+')</span>'+
    (cur.r==='NV'?'<span class="bd '+(inCa()?'s0':'s1')+'">'+(inCa()?'Đang trong ca':'Chưa vào ca')+'</span>':'')+
-   '<button class="bt sm" onclick="logout()">Đăng xuất</button></div><nav>'+tabs.map(t=>'<button class="'+(t[0]===tab?'on':'')+'" onclick="tab=\''+t[0]+'\';render()">'+t[1]+(t[2]?' <span class="bd s2">'+t[2]+'</span>':'')+'</button>').join('')+'</nav>'+alertBar()+'</header>'+(DB?'':'<p class="mut" style="padding:6px 16px;margin:0">⚠ Chưa kết nối dữ liệu dùng chung: đơn và chat chỉ hiện trên thiết bị này.</p>')+'<main>'+body+'</main>';paintMsgs();
+   '<button class="bt sm" onclick="logout()">Đăng xuất</button></div>'+alertBar()+'</header>'+(DB?'':'<p class="mut" style="padding:6px 16px;margin:0">⚠ Chưa kết nối dữ liệu dùng chung: đơn và chat chỉ hiện trên thiết bị này.</p>')+'<main>'+body+'</main>';paintMsgs();
 }
 /* ---------- gọi món + chat (dùng chung qua db) ---------- */
 const BASE=location.href.split('#')[0];
 const MENU=[['cf','Cà phê sữa',30000,'☕'],['td','Trà đào',35000,'🧋'],['ns','Nước suối',15000,'💧'],['cc','Coca-Cola',25000,'🥤'],['bi','Bia',35000,'🍺'],['bm','Bánh mì',30000,'🥖'],['pho','Phở bò',65000,'🍜'],['com','Cơm gà',70000,'🍗'],['mx','Mì xào hải sản',75000,'🍝'],['tc','Trái cây',45000,'🍉']];
 const ST=['Chờ xác nhận','Đang chuẩn bị','Đã phục vụ'],SC=['s1','s3','s0'];
-let DB=null,ORD=[],CHAT=[],ALR=[],alrInit=false,G=null,C=null,cart={};
+let DB=null,ORD=[],CHAT=[],ALR=[],BK=[],alrInit=false,G=null,C=null,cart={};
 const newId=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const unread=r=>CHAT.some(m=>m.room===r&&m.from==='khach'&&m.t>((S.seen||{})[r]||0));
 const unreadN=()=>[...new Set(CHAT.map(m=>m.room))].filter(unread).length;
@@ -164,11 +169,11 @@ async function initDB(){
   try{if(window.FIREBASE_CONFIG&&window.firebase){firebase.initializeApp(FIREBASE_CONFIG);DB=firebase.firestore()}}catch(e){console.error(e);DB=null}
   if(!DB){render();return}
   const sub=(col,fn)=>DB.collection(col).onSnapshot(s=>{fn(s.docs.map(d=>d.data()));refresh()},()=>{});
-  sub('orders',a=>ORD=a);sub('chat',a=>CHAT=a);sub('alerts',a=>{if(alrInit&&!G&&cur){const old=new Set(ALR.map(x=>x.id));if(a.some(x=>x.st===0&&!old.has(x.id)))beep()}alrInit=true;ALR=a});render();
+  sub('orders',a=>ORD=a);sub('bookings',a=>BK=a);sub('chat',a=>CHAT=a);sub('alerts',a=>{if(alrInit&&!G&&cur){const old=new Set(ALR.map(x=>x.id));if(a.some(x=>x.st===0&&!old.has(x.id)))beep()}alrInit=true;ALR=a});render();
 }
 function put(col,o){
   if(DB){try{DB.collection(col).doc(o.id).set(o).catch(e=>{console.error(e);toast('Không gửi được: '+(e.code||e.message))})}catch(e){console.error(e);toast('Không gửi được: '+(e.code||e.message))}return}
-  const L=col==='orders'?ORD:col==='chat'?CHAT:ALR,i=L.findIndex(x=>x.id===o.id);
+  const L=col==='orders'?ORD:col==='chat'?CHAT:col==='alerts'?ALR:BK,i=L.findIndex(x=>x.id===o.id);
   if(i<0)L.push(o);else L[i]=o;
   S[col]=L;save();refresh();
 }
@@ -199,7 +204,7 @@ function guiDon(){
 }
 function guestHTML(){
   const tot=MENU.reduce((t,m)=>t+(cart[m[0]]||0)*m[2],0);
-  return '<header><div class="hd"><b>🏨 Khách sạn</b><span class="sp"></span><span class="mut">Phòng '+G+'</span></div></header>'+(DB?'':'<p class="mut" style="padding:6px 16px;margin:0">⚠ Chưa kết nối dữ liệu dùng chung: đơn và chat chỉ hiện trên thiết bị này.</p>')+
+  return '<header><div class="hd">'+BRAND+'<span class="sp"></span><span class="mut">Phòng '+G+'</span></div></header>'+(DB?'':'<p class="mut" style="padding:6px 16px;margin:0">⚠ Chưa kết nối dữ liệu dùng chung: đơn và chat chỉ hiện trên thiết bị này.</p>')+
    '<main><button class="sos" onclick="baoKC()">🚨 Báo khẩn cấp</button>'+guestAlerts()+'<div class="card"><h3>🍽️ Gọi đồ ăn uống</h3>'+MENU.map(m=>'<div class="top" style="padding:6px 0;gap:10px"><span class="ph">'+m[3]+'<img src="images/'+m[0]+'.jpg" alt="" onerror="if(!this.dataset.t){this.dataset.t=1;this.src=\'images/'+m[0]+'.png\'}else this.remove()"></span><span style="flex:1">'+m[1]+'<br><span class="mut">'+money(m[2])+'</span></span><span><button class="bt sm" onclick="qty(\''+m[0]+'\',-1)">−</button> <b>'+(cart[m[0]]||0)+'</b> <button class="bt sm" onclick="qty(\''+m[0]+'\',1)">+</button></span></div>').join('')+
    '<div class="top" style="margin-top:10px"><b>Tổng: '+money(tot)+'</b><button class="bt pr" onclick="guiDon()">Gửi đơn</button></div></div>'+
    '<h3 style="margin-top:16px">Đơn của bạn</h3>'+ordList(ORD.filter(o=>o.room===G).sort((a,b)=>b.t-a.t))+chatBox(G,'khach')+'</main>';
@@ -250,9 +255,15 @@ function doiAlert(id,st){
 }
 function alertBar(){
   const L=ALR.filter(a=>a.st<2).sort((a,b)=>a.t-b.t);
-  document.title=(L.length?'🚨 ('+L.length+') ':'')+'Quản lý khách sạn';
+  document.title=(L.length?'🚨 ('+L.length+') ':'')+'MY HOTEL';
   if(!L.length)return '';
   return '<div class="alr">'+L.map(a=>'<div class="ar"><div><b>🚨 KHẨN CẤP – Phòng '+a.room+'</b> · '+esc(a.type)+(a.note?' · '+esc(a.note):'')+'<br><small>'+fmtT(a.t)+' · '+(a.st===1?'Đã tiếp nhận bởi '+esc(a.by):'Chưa xử lý')+'</small></div><div class="act" style="margin:0">'+(a.st===0?'<button class="bt sm" onclick="doiAlert(\''+a.id+'\',1)">Tiếp nhận</button>':'')+'<button class="bt sm" onclick="doiAlert(\''+a.id+'\',2)">Đã xử lý</button></div></div>').join('')+'</div>';
 }
+function bookingsHTML(){
+  const L=BK.slice().sort((a,b)=>a.st-b.st||a.t-b.t);
+  if(!L.length)return '<p class="mut">Chưa có yêu cầu đặt phòng online nào.</p>';
+  return '<div class="grid">'+L.map(b=>'<div class="card"><div class="top"><b>'+esc(b.ten)+'</b><span class="bd '+(b.st?'s0':'s1')+'">'+(b.st?'Đã liên hệ':'Mới')+'</span></div><div class="gi">📞 '+esc(b.sdt)+'<br>Phòng '+esc(b.loai)+' · nhận '+fmtD(b.ngay)+' · '+b.dem+' đêm'+(b.note?'<br>📝 '+esc(b.note):'')+'<br><span class="mut">Gửi lúc '+fmtT(b.t)+'</span></div>'+(b.st?'':'<div class="act"><button class="bt pr sm" onclick="doiBK(\''+b.id+'\')">Đã liên hệ khách</button></div>')+'</div>').join('')+'</div>';
+}
+function doiBK(id){const b=BK.find(x=>x.id===id);if(b)put('bookings',Object.assign({},b,{st:1,by:cur.n}))}
 window.addEventListener('hashchange',()=>{readHash();render()});
-load();ORD=S.orders||[];CHAT=S.chat||[];ALR=S.alerts||[];readHash();render();initDB();
+load();ORD=S.orders||[];CHAT=S.chat||[];ALR=S.alerts||[];BK=S.bookings||[];readHash();render();initDB();
