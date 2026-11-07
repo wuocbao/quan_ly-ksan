@@ -163,8 +163,10 @@ footer{background:var(--navy2);color:#b7c3d0;text-align:center;padding:26px 20px
 const $=id=>document.getElementById(id),dlg=$('dlg');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>Math.round(n).toLocaleString('vi-VN')+' ₫';
-let DB=null;
-try{if(window.FIREBASE_CONFIG&&window.firebase){firebase.initializeApp(FIREBASE_CONFIG);DB=firebase.firestore()}}catch(e){console.error(e)}
+let DB=null,WHY='';
+if(!window.FIREBASE_CONFIG)WHY='chưa có cấu hình Firebase trong config.js';
+else if(!window.firebase)WHY='không tải được thư viện Firebase';
+else try{firebase.initializeApp(FIREBASE_CONFIG);DB=firebase.firestore()}catch(e){console.error(e);WHY='lỗi khởi tạo: '+e.message}
 function openBook(l){
   if(l)$('bl').value=l;
   $('bd').min=$('bd').value=new Date().toLocaleDateString('en-CA');
@@ -174,7 +176,7 @@ async function sendBook(){
   const m=$('msg'),ten=$('bn').value.trim(),sdt=$('bs').value.trim(),dem=parseInt($('bm').value),ngay=$('bd').value;
   m.style.color='#b91c1c';
   if(!ten||!/^[0-9+\s]{8,15}$/.test(sdt)||!(dem>0)||!ngay){m.textContent='Vui lòng nhập đủ họ tên, số điện thoại hợp lệ, ngày và số đêm.';return}
-  if(!DB){m.textContent='Chưa kết nối hệ thống, vui lòng gọi hotline để đặt phòng.';return}
+  if(!DB){m.textContent='Chưa kết nối hệ thống ('+WHY+'). Vui lòng gọi hotline để đặt phòng.';return}
   $('bk').disabled=true;
   try{
     const id='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -187,7 +189,7 @@ async function sendBook(){
 async function tra(){
   const code=$('hc').value.trim().toUpperCase(),r=$('rs');
   if(!code){r.innerHTML='';return}
-  if(!DB){r.innerHTML='<p style="text-align:center;color:#b91c1c">Chưa kết nối hệ thống, vui lòng liên hệ lễ tân.</p>';return}
+  if(!DB){r.innerHTML='<p style="text-align:center;color:#b91c1c">Chưa kết nối hệ thống ('+esc(WHY)+'). Vui lòng liên hệ lễ tân.</p>';return}
   r.innerHTML='<p style="text-align:center">Đang tra cứu…</p>';
   try{
     const d=await DB.collection('invoices').doc(code).get();
