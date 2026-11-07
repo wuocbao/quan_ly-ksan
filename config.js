@@ -1,4 +1,4 @@
-/window.FIREBASE_CONFIG = {
+window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyA4btdukGOEDBT8P_ExVu_-zx5Tmy4_dIc",
   authDomain: "quanlyksan.firebaseapp.com",
   projectId: "quanlyksan",
