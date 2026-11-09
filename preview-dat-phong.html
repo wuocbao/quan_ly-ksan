@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xem trước: Đặt phòng &amp; Email xác nhận</title>
+<style>
+  :root { --gold:#d4a343; --navy:#071728; --bd:#d9e3dc; --mut:#64748b; --tx:#1e293b; --card:#fff; --ok:#16a34a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; background:#eef2f5; color:var(--tx); }
+  header { background:var(--navy); color:#fff; padding:16px 24px; }
+  header h1 { margin:0; font-family:Georgia,serif; font-size:22px; color:var(--gold); }
+  header p { margin:4px 0 0; font-size:13px; opacity:.8; }
+  .wrap { display:grid; grid-template-columns: 1fr 1fr; gap:24px; padding:24px; max-width:1200px; margin:0 auto; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  .panel { background:var(--card); border-radius:18px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.08); }
+  .step { display:inline-block; background:var(--gold); color:#1b1405; font-weight:700; font-size:12px; padding:3px 10px; border-radius:20px; margin-bottom:8px; }
+  h2 { margin:0 0 4px; font-family:Georgia,serif; color:var(--gold); font-size:22px; }
+  .sub { color:var(--mut); font-size:14px; margin:0 0 14px; }
+  label { display:block; font-size:13px; font-weight:600; color:var(--mut); margin:10px 0 4px; }
+  input, select { width:100%; padding:10px 12px; border:1px solid var(--bd); border-radius:10px; font:inherit; }
+  .f2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .room-pick { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .rp-opt { position:relative; padding:0; border:2px solid var(--bd); border-radius:12px; background:#fff; cursor:pointer; overflow:hidden; text-align:left; font:inherit; transition:.2s; }
+  .rp-opt:hover { transform:translateY(-2px); }
+  .rp-opt img { display:block; width:100%; height:110px; object-fit:cover; }
+  .rp-info { display:flex; flex-direction:column; gap:2px; padding:8px 10px; font-size:13px; }
+  .rp-info small { color:var(--mut); }
+  .rp-info em { font-style:normal; font-weight:700; color:var(--gold); }
+  .rp-opt.active { border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,163,67,.25); }
+  .rp-opt.active::after { content:'✓'; position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%; background:var(--gold); color:#1b1405; font-weight:700; display:grid; place-items:center; }
+  .calc { background:#f4f7f5; border-radius:10px; padding:12px; margin:12px 0; font-size:14px; }
+  .calc div { display:flex; justify-content:space-between; margin-top:4px; }
+  .calc .tot { border-top:1px dashed var(--bd); padding-top:6px; margin-top:6px; font-size:16px; }
+  .btn { background:var(--gold); color:#1b1405; border:0; border-radius:10px; padding:12px 18px; font-weight:700; cursor:pointer; font:inherit; font-weight:700; width:100%; margin-top:8px; }
+  .msg { margin-top:10px; font-size:14px; min-height:20px; }
+
+  /* Email mock */
+  .mail-client { border:1px solid var(--bd); border-radius:12px; overflow:hidden; }
+  .mail-head { background:#f8fafc; padding:12px 16px; font-size:13px; border-bottom:1px solid var(--bd); line-height:1.7; }
+  .mail-head b { display:inline-block; width:70px; color:var(--mut); font-weight:600; }
+  .mail-body { background:#f1f5f9; padding:20px; }
+  .em { max-width:520px; margin:0 auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+  .em-hero { position:relative; height:150px; }
+  .em-hero img { width:100%; height:100%; object-fit:cover; display:block; }
+  .em-hero div { position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,23,40,.1),rgba(7,23,40,.85)); display:flex; flex-direction:column; justify-content:flex-end; padding:14px 18px; color:#fff; }
+  .em-hero b { font-family:Georgia,serif; font-size:20px; color:var(--gold); }
+  .em-content { padding:20px 22px; font-size:14px; line-height:1.65; }
+  .badge { display:inline-block; background:#dcfce7; color:var(--ok); font-weight:700; padding:4px 12px; border-radius:20px; font-size:13px; }
+  .em table { width:100%; border-collapse:collapse; margin:14px 0; }
+  .em td { padding:8px 10px; border-bottom:1px dashed var(--bd); }
+  .em td:first-child { color:var(--mut); width:42%; }
+  .em-foot { background:var(--navy); color:#cbd5e1; font-size:12px; padding:14px 22px; line-height:1.6; }
+  .placeholder { text-align:center; color:var(--mut); padding:60px 20px; }
+  .note { font-size:12px; color:var(--mut); margin-top:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>👀 Xem trước: Đặt phòng &amp; Email xác nhận</h1>
+  <p>Trang mô phỏng — không gửi dữ liệu thật. Điền form bên trái, bấm "Gửi" để xem email khách sẽ nhận sau khi lễ tân duyệt đơn.</p>
+</header>
+
+<div class="wrap">
+  <!-- Form đặt phòng -->
+  <div class="panel">
+    <span class="step">BƯỚC 1 · KHÁCH ĐẶT PHÒNG</span>
+    <h2>📅 Đặt Phòng Trực Tuyến</h2>
+    <p class="sub">Vui lòng điền thông tin, lễ tân sẽ liên hệ xác nhận trong 5-10 phút.</p>
+
+    <label>Họ và tên quý khách (*)<input id="bn" value="Nguyễn Văn A" oninput="render()"></label>
+    <div class="f2">
+      <label>Số điện thoại (*)<input id="bs" value="0912 345 678" oninput="render()"></label>
+      <label>Email (*)<input id="be" value="nguyenvana@gmail.com" oninput="render()"></label>
+    </div>
+
+    <label>Loại phòng mong muốn</label>
+    <div class="room-pick" id="room_pick">
+      <button type="button" class="rp-opt active" data-v="Thường" onclick="pickRoom('Thường')">
+        <img src="images/photo-1618773928121-c32242e63f39.jpg" alt="">
+        <span class="rp-info"><b>🛏️ Standard Deluxe</b><small>28 m² · 2 người lớn</small><em>300.000 ₫/đêm · 60.000 ₫/giờ</em></span>
+      </button>
+      <button type="button" class="rp-opt" data-v="VIP" onclick="pickRoom('VIP')">
+        <img src="images/photo-1611892440504-42a792e24d32.jpg" alt="">
+        <span class="rp-info"><b>👑 VIP Executive Suite</b><small>55 m² · Hướng biển</small><em>600.000 ₫/đêm · 120.000 ₫/giờ</em></span>
+      </button>
+    </div>
+
+    <div class="f2">
+      <label>Hình thức thuê phòng
+        <select id="b_kieu" onchange="render()">
+          <option value="ngay">🌙 Theo ngày / đêm</option>
+          <option value="gio">⏱️ Theo giờ</option>
+        </select>
+      </label>
+      <label><span id="bm_label">Số đêm lưu trú</span><input id="bm" type="number" min="1" max="30" value="3" oninput="render()"></label>
+    </div>
+
+    <div class="f2">
+      <label>Ngày nhận phòng<input id="bd" type="date" onchange="render()"></label>
+      <label id="b_time_wrap" style="display:none">Giờ nhận phòng dự kiến<input id="b_gio_vao" type="time" value="14:00" onchange="render()"></label>
+    </div>
+
+    <div class="calc">
+      <div><span>Đơn giá phòng:</span><b id="c_rate"></b></div>
+      <div><span>Ưu đãi áp dụng:</span><b id="c_disc" style="color:var(--ok)"></b></div>
+      <div class="tot"><span>Ước tính tổng tiền:</span><b id="c_total" style="color:var(--gold)"></b></div>
+    </div>
+
+    <button class="btn" onclick="send()">Gửi Yêu Cầu Đặt Phòng</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <!-- Email -->
+  <div class="panel">
+    <span class="step">BƯỚC 2 · LỄ TÂN DUYỆT → EMAIL GỬI KHÁCH</span>
+    <h2>📧 Email Xác Nhận</h2>
+    <p class="sub">Đây là nội dung email khách nhận được khi lễ tân bấm "Duyệt" trong trang quản trị.</p>
+    <div class="mail-client" id="mail">
+      <div class="placeholder">Bấm <b>"Gửi Yêu Cầu Đặt Phòng"</b> bên trái để xem email.</div>
+    </div>
+    <p class="note">* Email thật được gửi qua EmailJS (cấu hình trong Quản trị → Cài đặt). Nếu chưa cấu hình, hệ thống mở ứng dụng mail với nội dung tương tự.</p>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const money = n => Math.round(n || 0).toLocaleString('vi-VN') + ' ₫';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const fmtD = d => d ? d.split('-').reverse().join('/') : '—';
+let loai = 'Thường', bookingId = null;
+
+$('bd').value = new Date().toLocaleDateString('en-CA');
+
+function pickRoom(v) {
+  loai = v;
+  document.querySelectorAll('.rp-opt').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  render();
+}
+
+function calc() {
+  const kieu = $('b_kieu').value;
+  const isHour = kieu === 'gio';
+  const qty = parseInt($('bm').value) || 1;
+  const rate = isHour ? (loai === 'VIP' ? 120000 : 60000) : (loai === 'VIP' ? 600000 : 300000);
+  const disc = (!isHour && qty >= 3) ? 0.15 : 0;
+  return { isHour, qty, rate, disc, total: Math.round(rate * qty * (1 - disc)) };
+}
+
+function render() {
+  const c = calc();
+  $('bm_label').textContent = c.isHour ? 'Số giờ thuê' : 'Số đêm lưu trú';
+  $('b_time_wrap').style.display = c.isHour ? 'block' : 'none';
+  $('c_rate').textContent = money(c.rate) + (c.isHour ? '/giờ' : '/đêm');
+  $('c_disc').textContent = c.disc ? 'Giảm 15% (ở từ 3 đêm)' : 'Không áp dụng';
+  $('c_total').textContent = money(c.total);
+  if (bookingId) renderMail();
+}
+
+function send() {
+  bookingId = 'bk_' + Date.now().toString(36);
+  $('msg').innerHTML = `<b style="color:var(--ok)">🎉 Đã gửi yêu cầu! Mã: ${bookingId}</b><br><span style="color:var(--mut)">→ Lễ tân duyệt đơn, email bên phải được gửi tới khách.</span>`;
+  renderMail();
+}
+
+function renderMail() {
+  const c = calc();
+  const vip = loai === 'VIP';
+  const img = vip ? 'images/photo-1611892440504-42a792e24d32.jpg' : 'images/photo-1618773928121-c32242e63f39.jpg';
+  $('mail').innerHTML = `
+    <div class="mail-head">
+      <div><b>Từ:</b> MY HOTEL RESORT &lt;hotro@myhotel.vn&gt;</div>
+      <div><b>Đến:</b> ${esc($('be').value)}</div>
+      <div><b>Tiêu đề:</b> [MY HOTEL RESORT] Xác nhận đặt phòng ${bookingId}</div>
+    </div>
+    <div class="mail-body">
+      <div class="em">
+        <div class="em-hero"><img src="${img}" alt=""><div><b>MY HOTEL RESORT</b><small>Cảm ơn Quý khách đã lựa chọn chúng tôi</small></div></div>
+        <div class="em-content">
+          <span class="badge">✅ ĐƠN ĐẶT PHÒNG ĐÃ ĐƯỢC DUYỆT</span>
+          <p>Kính gửi Quý khách <b>${esc($('bn').value)}</b>,</p>
+          <p>MY HOTEL RESORT xin xác nhận đơn đặt phòng của Quý khách đã được <b>DUYỆT</b>.</p>
+          <table>
+            <tr><td>Mã đơn</td><td><b>${bookingId}</b></td></tr>
+            <tr><td>Loại phòng</td><td>${vip ? '👑 VIP Executive Suite' : '🛏️ Standard Deluxe'}</td></tr>
+            <tr><td>Số phòng</td><td>Phòng ${vip ? 16 : 5}</td></tr>
+            <tr><td>Ngày nhận phòng</td><td>${fmtD($('bd').value)} (${c.isHour ? 'lúc ' + $('b_gio_vao').value : 'từ 14:00'})</td></tr>
+            <tr><td>Hình thức thuê</td><td>${c.isHour ? `Theo giờ – ${c.qty} giờ` : `Theo ngày – ${c.qty} đêm`}</td></tr>
+            <tr><td>Tổng tiền dự kiến</td><td><b style="color:var(--gold)">${money(c.total)}</b>${c.disc ? ' <small style="color:var(--ok)">(đã giảm 15%)</small>' : ''}</td></tr>
+          </table>
+          <p>Khi đến nhận phòng, Quý khách vui lòng mang theo <b>CCCD/Hộ chiếu</b>. Sau khi Check-in, Quý khách có thể quét mã QR trong phòng để gọi món và chat với lễ tân.</p>
+          <p>Trân trọng,<br><b>Lễ tân – MY HOTEL RESORT</b></p>
+        </div>
+        <div class="em-foot">📍 123 Đường Bờ Biển, Bãi Sau, TP. Vũng Tàu<br>📞 Hotline: 0900 000 000 · ✉️ hotro@myhotel.vn</div>
+      </div>
+    </div>`;
+}
+
+render();
+</script>
+</body>
+</html>
+
