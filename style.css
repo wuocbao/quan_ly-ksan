@@ -823,5 +823,20 @@ dialog h3 {
     width: 100%;
     overflow-x: auto;
     padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
   }
 }
+
+@media (max-width: 560px) {
+  main { padding: 14px 10px 60px; }
+  .hd { padding: 10px 12px; gap: 6px; }
+  .grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fl { flex-direction: column; }
+  dialog { padding: 16px; width: 96vw; }
+  input, select, textarea { font-size: 16px; }
+  .invoice-header, .invoice-meta { flex-direction: column; gap: 6px; text-align: left !important; }
+  .invoice-header > div, .invoice-meta > div { text-align: left !important; }
+}
+
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }

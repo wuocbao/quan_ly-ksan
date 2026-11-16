@@ -25,10 +25,10 @@ let cart = {};
 const DEMO_MODE = new URLSearchParams(location.search).get('demo') === '1';
 
 let chatTimerInterval = null;
-let chatIdleSeconds = 0;
+let chatProgrammaticScroll = false;
 const IDLE_WARN_SECONDS = 5;
 const CHAT_TOTAL_TIMEOUT_SECONDS = 65;
-let chatClosed = false;
+const chatActiveMap = {}; // Lưu mốc tương tác cuối cùng theo từng phòng/kênh: { [room]: timestamp }
 
 const dlg = document.getElementById('dlg');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -138,6 +138,18 @@ const save = () => {
     localStorage.setItem(K, JSON.stringify(S));
   } catch (e) {
     console.error('Lỗi lưu localStorage', e);
+  }
+  if (DB && S) {
+    try {
+      DB.collection('system').doc('state').set({
+        rooms: S.rooms || [],
+        menu: S.menu || [],
+        settings: S.settings || DEFAULT_SETTINGS,
+        ca: S.ca || [],
+        dt: S.dt || [],
+        updatedAt: Date.now()
+      }, { merge: true }).catch(e => console.warn('Sync state warning:', e));
+    } catch (e) {}
   }
 };
 
@@ -499,8 +511,7 @@ function resetRoomDataOnCheckout(ma) {
   try { localStorage.setItem('ks_orders', JSON.stringify(ORD)); } catch (e) {}
 
   // 2. Xóa toàn bộ đoạn chat của phòng này
-  CHAT = CHAT.filter(m => Number(m.room) !== Number(ma));
-  try { localStorage.setItem('ks_chat', JSON.stringify(CHAT)); } catch (e) {}
+  deleteRoomChat(ma, false);
 
   // 3. Xóa các cảnh báo khẩn cấp của phòng này
   ALR = ALR.filter(a => Number(a.room) !== Number(ma));
@@ -967,7 +978,8 @@ function luuCaiDat() {
     bankOwner: val('st_owner') || '',
     ejsService: val('st_ejs_service') || '',
     ejsTemplate: val('st_ejs_template') || '',
-    ejsKey: val('st_ejs_key') || ''
+    ejsKey: val('st_ejs_key') || '',
+    gasMailUrl: val('st_gas_url') || ''
   };
   save();
   toast('Đã lưu cấu hình khách sạn thành công!');
@@ -1085,16 +1097,19 @@ function roomsHTML() {
 
   const f = `
     <div class="stats" style="margin-top:0">
-      <div class="card" style="border-left:4px solid var(--ok);cursor:pointer" onclick="F.tt='0';render()">
+      <div class="card" style="border-left:4px solid var(--gold);cursor:pointer;${F.tt === '' ? 'box-shadow:0 0 0 2px var(--gold)' : ''}" onclick="F.tt='';F.loai='';F.tang='';F.q='';render()">
+        <small>🏨 Tất cả phòng</small><b>${S.rooms.length}</b>
+      </div>
+      <div class="card" style="border-left:4px solid var(--ok);cursor:pointer;${F.tt === '0' ? 'box-shadow:0 0 0 2px var(--ok)' : ''}" onclick="F.tt=F.tt==='0'?'':'0';render()">
         <small>🟢 Phòng trống</small><b>${count0}</b>
       </div>
-      <div class="card" style="border-left:4px solid var(--wn);cursor:pointer" onclick="F.tt='1';render()">
+      <div class="card" style="border-left:4px solid var(--wn);cursor:pointer;${F.tt === '1' ? 'box-shadow:0 0 0 2px var(--wn)' : ''}" onclick="F.tt=F.tt==='1'?'':'1';render()">
         <small>🟡 Đã đặt trước</small><b>${count1}</b>
       </div>
-      <div class="card" style="border-left:4px solid var(--bz);cursor:pointer" onclick="F.tt='2';render()">
+      <div class="card" style="border-left:4px solid var(--bz);cursor:pointer;${F.tt === '2' ? 'box-shadow:0 0 0 2px var(--bz)' : ''}" onclick="F.tt=F.tt==='2'?'':'2';render()">
         <small>🔴 Đang có khách</small><b>${count2}</b>
       </div>
-      <div class="card" style="border-left:4px solid var(--purple);cursor:pointer" onclick="F.tt='3';render()">
+      <div class="card" style="border-left:4px solid var(--purple);cursor:pointer;${F.tt === '3' ? 'box-shadow:0 0 0 2px var(--purple)' : ''}" onclick="F.tt=F.tt==='3'?'':'3';render()">
         <small>🟣 Cần dọn dẹp</small><b>${count3}</b>
       </div>
     </div>
@@ -1477,9 +1492,17 @@ function settingsTabHTML() {
         <label>Tên chủ tài khoản<input id="st_owner" placeholder="NGUYEN VAN A" value="${esc(s.bankOwner)}"></label>
       </div>
 
-      <h4 style="margin:16px 0 6px;color:var(--gold)">📧 Gửi Email Xác Nhận Đặt Phòng (EmailJS)</h4>
+      <h4 style="margin:16px 0 6px;color:var(--gold)">📧 Gửi Email Xác Nhận Đặt Phòng Tự Động (Auto 100%)</h4>
       <p class="mut" style="margin:0 0 8px;font-size:13px">
-        Tạo tài khoản miễn phí tại <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> → thêm Email Service (Gmail) → tạo Email Template với biến:
+        <b>Cách 1 (Khuyên dùng - Nhanh nhất bằng Google Apps Script):</b> Dán Web App URL của Google Apps Script vào ô bên dưới để tự động gửi email từ chính Gmail của bạn tới bất kỳ email khách hàng nào.<br>
+        <button type="button" class="bt sm" style="margin-top:4px" onclick="huongDanGAS()">📖 Xem mã &amp; Hướng dẫn tạo link Google Apps Script (1 phút)</button>
+      </p>
+      <div class="fl">
+        <label style="flex:1">Google Apps Script Web App URL (Auto gửi qua Gmail)<input id="st_gas_url" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(s.gasMailUrl || '')}"></label>
+      </div>
+
+      <p class="mut" style="margin:10px 0 8px;font-size:13px">
+        <b>Cách 2 (EmailJS):</b> Tạo tài khoản tại <a href="https://www.emailjs.com" target="_blank" rel="noopener">emailjs.com</a> → thêm Email Service (Gmail) → tạo Email Template với biến:
         <code>{{to_email}}</code>, <code>{{to_name}}</code>, <code>{{hotel_name}}</code>, <code>{{room_type}}</code>, <code>{{room_number}}</code>, <code>{{checkin_date}}</code>, <code>{{nights}}</code>, <code>{{hotline}}</code>, <code>{{booking_id}}</code>, <code>{{staff_name}}</code>, <code>{{message}}</code>.
         Ô "To Email" trong template đặt là <code>{{to_email}}</code>.
       </p>
@@ -1488,7 +1511,7 @@ function settingsTabHTML() {
         <label>Template ID<input id="st_ejs_template" placeholder="template_xxxxxxx" value="${esc(s.ejsTemplate || '')}"></label>
         <label>Public Key<input id="st_ejs_key" placeholder="xxxxxxxxxxxxxxx" value="${esc(s.ejsKey || '')}"></label>
       </div>
-      <p class="mut" style="font-size:12px;margin:0 0 10px">Trạng thái: ${emailConfigured() ? '<b style="color:var(--ok)">✅ Đã cấu hình</b>' : '<b style="color:var(--wn)">⚠ Chưa cấu hình — khi duyệt đơn sẽ mở ứng dụng mail để gửi thủ công</b>'}</p>
+      <p class="mut" style="font-size:12px;margin:0 0 10px">Trạng thái: ${emailConfigured() ? '<b style="color:var(--ok)">✅ Đã bật Gửi Email Tự Động (Auto 100%)</b>' : '<b style="color:var(--wn)">⚠ Chưa điền URL Apps Script hoặc EmailJS — khi duyệt đơn sẽ hiện bảng gửi nhanh qua Gmail Web</b>'}</p>
       <button class="bt pr" onclick="luuCaiDat()">💾 Lưu Cài Đặt</button>
     </div>
 
@@ -1522,6 +1545,9 @@ function render() {
     return;
   }
 
+  ensureChatTimer();
+  purgeExpiredAndCheckedOutChats();
+
   const unhandledBookings = BK.filter(b => !b.st).length;
   const activeOrders = ORD.filter(o => o.st < 2).length;
   const unreadCount = unreadN();
@@ -1542,13 +1568,6 @@ function render() {
   }
 
   if (!tabs.some(t => t[0] === tab)) tab = 'ph';
-
-  if (tab !== 'ch' && !G) {
-    if (chatTimerInterval) {
-      clearInterval(chatTimerInterval);
-      chatTimerInterval = null;
-    }
-  }
 
   const body =
     tab === 'ph' ? roomsHTML() :
@@ -1662,9 +1681,49 @@ async function initDB() {
     }
   };
 
-  sub('orders', a => { ORD = a; localStorage.setItem('ks_orders', JSON.stringify(a)); });
-  sub('bookings', a => { BK = a; localStorage.setItem('ks_bookings', JSON.stringify(a)); });
-  sub('chat', a => { CHAT = a; localStorage.setItem('ks_chat', JSON.stringify(a)); resetChatTimer(false); });
+  let ordInit = false, bkInit = false, chatInit = false;
+  const ding = () => {
+    try {
+      const c = new (window.AudioContext || window.webkitAudioContext)();
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.frequency.value = 660;
+      g.gain.value = 0.15;
+      o.connect(g);
+      g.connect(c.destination);
+      o.start();
+      setTimeout(() => { o.stop(); c.close(); }, 180);
+    } catch (e) {}
+  };
+
+  sub('orders', a => {
+    if (ordInit && !G && cur && a.length > ORD.length) {
+      ding();
+      toast('🍽️ Có đơn gọi món QR mới từ khách hàng!');
+    }
+    ordInit = true;
+    ORD = a;
+    localStorage.setItem('ks_orders', JSON.stringify(a));
+  });
+  sub('bookings', a => {
+    if (bkInit && !G && cur && a.length > BK.length) {
+      ding();
+      toast('📅 Có yêu cầu đặt phòng trực tuyến mới!');
+    }
+    bkInit = true;
+    BK = a;
+    localStorage.setItem('ks_bookings', JSON.stringify(a));
+  });
+  sub('chat', a => {
+    const prevLen = CHAT.length;
+    if (chatInit && !G && cur && a.length > prevLen) {
+      const last = a[a.length - 1];
+      if (last && last.from === 'khach') ding();
+    }
+    chatInit = true;
+    CHAT = a;
+    localStorage.setItem('ks_chat', JSON.stringify(a));
+  });
   sub('alerts', a => {
     if (alrInit && !G && cur) {
       const old = new Set(ALR.map(x => x.id));
@@ -1674,6 +1733,31 @@ async function initDB() {
     ALR = a;
     localStorage.setItem('ks_alerts', JSON.stringify(a));
   });
+
+  // Đồng bộ thời gian thực trạng thái Phòng, Thực đơn, Cài đặt, Hóa đơn cho nhiều thiết bị truy cập cùng lúc
+  try {
+    DB.collection('system').doc('state').onSnapshot(doc => {
+      if (!doc.exists) {
+        if (cur) save();
+        return;
+      }
+      const d = doc.data();
+      if (!d) return;
+      if (Array.isArray(d.rooms) && d.rooms.length) S.rooms = d.rooms;
+      if (Array.isArray(d.menu) && d.menu.length) {
+        S.menu = d.menu;
+        S.menu.forEach(m => {
+          const def = DEFAULT_MENU.find(x => x.id === m.id);
+          if (def && (!m.img || OUTDATED_MENU_IMGS.some(x => m.img.includes(x)))) m.img = def.img;
+        });
+      }
+      if (d.settings) S.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings);
+      if (Array.isArray(d.ca)) S.ca = d.ca;
+      if (Array.isArray(d.dt)) S.dt = d.dt;
+      try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) {}
+      refresh();
+    }, err => console.warn('System state snapshot warning:', err));
+  } catch (e) {}
 
   render();
 }
@@ -1761,7 +1845,40 @@ function doiBK(id, st) {
 /* --- Gửi email xác nhận khi lễ tân duyệt đơn --- */
 function emailConfigured() {
   const s = S && S.settings || {};
-  return !!(s.ejsService && s.ejsTemplate && s.ejsKey);
+  return !!(s.gasMailUrl || (s.ejsService && s.ejsTemplate && s.ejsKey));
+}
+
+function huongDanGAS() {
+  const code = `function doPost(e) {
+  var d = JSON.parse(e.postData.contents);
+  MailApp.sendEmail({
+    to: d.to,
+    subject: d.subject,
+    body: d.body
+  });
+  return ContentService.createTextOutput("OK");
+}`;
+  modal(
+    '🚀 Hướng dẫn bật Auto Gửi Email bằng Google Apps Script (Miễn phí)',
+    `
+    <ol style="padding-left:18px;font-size:13.5px;line-height:1.65;margin:0 0 12px">
+      <li>Mở <a href="https://script.google.com/home/start" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700">script.google.com</a> → Bấm <b>Dự án mới (New project)</b>.</li>
+      <li>Xóa đoạn mã cũ và dán đoạn mã 9 dòng bên dưới vào:</li>
+    </ol>
+    <textarea id="gas_code_box" rows="8" readonly style="font-family:monospace;font-size:12.5px">${code}</textarea>
+    <div style="margin:6px 0 12px">
+      <button type="button" class="bt sm" onclick="navigator.clipboard.writeText(document.getElementById('gas_code_box').value);toast('📋 Đã sao chép mã Apps Script!')">📋 Sao chép đoạn mã trên</button>
+    </div>
+    <ol start="3" style="padding-left:18px;font-size:13.5px;line-height:1.65;margin:0">
+      <li>Bấm nút <b>Triển khai (Deploy)</b> ở góc trên bên phải → <b>Tùy chọn triển khai mới (New deployment)</b>.</li>
+      <li>Chọn loại: <b>Ứng dụng web (Web app)</b> → Mục <i>Ai có quyền truy cập (Who has access)</i> chọn <b>Bất kỳ ai (Anyone)</b> → Bấm <b>Triển khai</b> và Cấp quyền Gmail.</li>
+      <li>Copy đường link <code>https://script.google.com/macros/s/.../exec</code> dán vào ô <b>Google Apps Script Web App URL</b> trong Cài đặt và bấm Lưu. Từ đó về sau bấm Duyệt đơn sẽ tự động gửi mail 100%!</li>
+    </ol>
+    `,
+    null,
+    null,
+    'Đã hiểu'
+  );
 }
 
 function setBookingEmailStatus(id, emailStatus) {
@@ -1792,21 +1909,65 @@ ${cur ? cur.n : 'Lễ tân'} – ${s.hotelName || 'MY HOTEL'}`;
 function openMailtoFallback(b) {
   const s = S.settings || DEFAULT_SETTINGS;
   const subject = `[${s.hotelName || 'MY HOTEL'}] Xác nhận đặt phòng ${b.id}`;
-  const url = `mailto:${encodeURIComponent(b.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bookingEmailText(b))}`;
-  const a = document.createElement('a');
-  a.href = url;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const body = bookingEmailText(b);
+  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(b.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const mailtoUrl = `mailto:${encodeURIComponent(b.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  modal(
+    `📧 Xem trước & Gửi Email Xác Nhận — ${esc(b.ten)}`,
+    `
+    <div style="background:color-mix(in srgb, var(--bd) 30%, transparent);padding:12px;border-radius:10px;margin-bottom:12px;font-size:13px;line-height:1.6">
+      <div><b>Người nhận:</b> ${esc(b.email)}</div>
+      <div><b>Tiêu đề:</b> ${esc(subject)}</div>
+      <div><b>Trạng thái:</b> ${emailConfigured() ? '<span style="color:var(--ok)">Đã cấu hình EmailJS</span>' : '<span style="color:var(--wn)">Chưa nhập mã EmailJS (có thể gửi qua Gmail Web hoặc Sao chép bên dưới)</span>'}</div>
+    </div>
+    <label>Nội dung email gửi khách
+      <textarea id="em_preview_box" rows="9" readonly style="font-size:13px;line-height:1.5;font-family:inherit">${esc(body)}</textarea>
+    </label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <a href="${gmailUrl}" target="_blank" rel="noopener" class="bt pr" onclick="setBookingEmailStatus('${b.id}','sent');toast('✅ Đã mở Gmail Web để gửi mail xác nhận')">✉️ Mở Gmail Web gửi ngay</a>
+      <a href="${mailtoUrl}" class="bt" onclick="setBookingEmailStatus('${b.id}','sent')">📨 Mở Ứng dụng Mail</a>
+      <button type="button" class="bt" onclick="navigator.clipboard.writeText(document.getElementById('em_preview_box').value);toast('📋 Đã sao chép nội dung email!')">📋 Sao chép nội dung</button>
+      <button type="button" class="bt sm" onclick="tab='st';document.getElementById('dlg').close();render()">⚙️ Cấu hình EmailJS tự động</button>
+    </div>
+    `,
+    null,
+    null,
+    'Đóng'
+  );
 }
 
 function sendBookingConfirmEmail(b) {
   if (!b || !b.email) return;
   const s = S.settings || DEFAULT_SETTINGS;
+  const subject = `[${s.hotelName || 'MY HOTEL'}] Xác nhận đặt phòng ${b.id}`;
 
+  // 1. Ưu tiên gửi tự động qua Google Apps Script Web App URL (nếu đã cấu hình)
+  if (s.gasMailUrl && s.gasMailUrl.startsWith('https://script.google.com/')) {
+    fetch(s.gasMailUrl.trim(), {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        to: b.email,
+        subject,
+        body: bookingEmailText(b)
+      })
+    }).then(() => {
+      setBookingEmailStatus(b.id, 'sent');
+      toast(`📧 Đã tự động gửi email xác nhận tới ${b.email}`);
+    }).catch(e => {
+      console.warn('GAS mail error:', e);
+      setBookingEmailStatus(b.id, 'failed');
+      toast('⚠ Lỗi gửi tự động qua Apps Script, mở bảng gửi dự phòng');
+      openMailtoFallback(b);
+    });
+    return;
+  }
+
+  // 2. Gửi tự động qua EmailJS (nếu đã cấu hình)
   if (!emailConfigured() || typeof emailjs === 'undefined') {
     setBookingEmailStatus(b.id, 'manual');
-    toast(`⚠ Chưa cấu hình EmailJS — mở ứng dụng mail để gửi tới ${b.email}`);
     openMailtoFallback(b);
     return;
   }
@@ -1993,8 +2154,11 @@ function msgsHTML(r) {
 function paintMsgs() {
   const e = document.getElementById('msgs');
   if (e) {
-    e.innerHTML = msgsHTML(G || C);
+    const targetRoom = G != null ? G : C;
+    e.innerHTML = msgsHTML(targetRoom);
+    chatProgrammaticScroll = true;
     e.scrollTop = e.scrollHeight;
+    setTimeout(() => { chatProgrammaticScroll = false; }, 60);
   }
 }
 
@@ -2007,84 +2171,139 @@ function quickReply(text) {
   onChatUserActive();
 }
 
-function onChatUserActive() {
-  chatIdleSeconds = 0;
-  chatClosed = false;
+function getRoomLastActive(roomNum) {
+  if (roomNum == null) return Date.now();
+  const manualTs = chatActiveMap[roomNum] || 0;
+  const roomMsgs = CHAT.filter(m => Number(m.room) === Number(roomNum));
+  const lastMsgTs = roomMsgs.reduce((max, m) => Math.max(max, m.t || 0), 0);
+  const best = Math.max(manualTs, lastMsgTs);
+  if (best > 0) return best;
+  // Nếu phòng chưa có tin nhắn nào và vừa mở lần đầu
+  chatActiveMap[roomNum] = Date.now();
+  return chatActiveMap[roomNum];
+}
+
+function isRoomChatClosed(roomNum) {
+  if (roomNum == null) return false;
+  const elapsed = Math.floor((Date.now() - getRoomLastActive(roomNum)) / 1000);
+  return elapsed >= CHAT_TOTAL_TIMEOUT_SECONDS;
+}
+
+function updateChatNoticeDOM() {
+  const activeRoom = G != null ? G : C;
+  if (activeRoom == null) return;
   const noticeEl = document.getElementById('chat_timer_notice');
-  if (noticeEl) {
+  const countEl = document.getElementById('chat_countdown');
+  if (!noticeEl) return;
+
+  const elapsed = Math.floor((Date.now() - getRoomLastActive(activeRoom)) / 1000);
+  if (elapsed >= IDLE_WARN_SECONDS && elapsed < CHAT_TOTAL_TIMEOUT_SECONDS) {
+    noticeEl.style.display = 'flex';
+    const remaining = Math.max(0, CHAT_TOTAL_TIMEOUT_SECONDS - elapsed);
+    if (countEl) countEl.textContent = remaining;
+    if (remaining <= 15) noticeEl.classList.add('urgent');
+    else noticeEl.classList.remove('urgent');
+  } else {
     noticeEl.style.display = 'none';
     noticeEl.classList.remove('urgent');
   }
-  if (!chatTimerInterval) {
-    ensureChatTimer(G || C, G ? 'khach' : 'nv');
+}
+
+function onChatUserActive() {
+  const activeRoom = G != null ? G : C;
+  if (activeRoom != null) {
+    chatActiveMap[activeRoom] = Date.now();
   }
+  updateChatNoticeDOM();
+  ensureChatTimer();
 }
 
 function resetChatTimer(showConfirmation = true) {
   onChatUserActive();
-  if (showConfirmation) toast('Đã gia hạn phiên chat thêm 1 phút!');
 }
 
-function ensureChatTimer(roomNum, who) {
-  if (chatTimerInterval) return;
-  chatTimerInterval = setInterval(() => {
-    chatIdleSeconds++;
-    const noticeEl = document.getElementById('chat_timer_notice');
-    const countEl = document.getElementById('chat_countdown');
+// Xóa sạch toàn bộ tin nhắn hội thoại của một phòng/kênh khỏi cả LocalStorage & Firestore
+function deleteRoomChat(roomNum, showMsg = false) {
+  const target = Number(roomNum);
+  const hasAny = CHAT.some(m => Number(m.room) === target);
+  CHAT = CHAT.filter(m => Number(m.room) !== target);
+  delete chatActiveMap[roomNum];
+  if (S && S.seen && S.seen[roomNum]) delete S.seen[roomNum];
+  try { localStorage.setItem('ks_chat', JSON.stringify(CHAT)); } catch (e) {}
 
-    // Sau 5 giây KHÔNG CÓ TƯƠNG TÁC thì mới bắt đầu HIỆN THÔNG BÁO
-    if (chatIdleSeconds >= IDLE_WARN_SECONDS) {
-      if (noticeEl) noticeEl.style.display = 'flex';
-      const remaining = Math.max(0, CHAT_TOTAL_TIMEOUT_SECONDS - chatIdleSeconds);
-      if (countEl) countEl.textContent = remaining;
-      if (noticeEl) {
-        if (remaining <= 15) noticeEl.classList.add('urgent');
-        else noticeEl.classList.remove('urgent');
-      }
+  if (DB) {
+    try {
+      DB.collection('chat').where('room', '==', target).get()
+        .then(s => s.forEach(d => d.ref.delete()))
+        .catch(() => {});
+    } catch (e) {}
+  }
 
-      if (remaining <= 0) {
-        clearInterval(chatTimerInterval);
-        chatTimerInterval = null;
-        chatClosed = true;
-        toast('Cửa sổ chat đã tự động đóng sau 1 phút không có hoạt động.');
-        render();
-      }
-    } else {
-      // Dưới 5 giây: ẩn thông báo hoàn toàn
-      if (noticeEl) noticeEl.style.display = 'none';
+  if (C != null && Number(C) === target) {
+    const remainingRooms = [...new Set(CHAT.map(m => m.room))].sort((a, b) => a - b);
+    C = remainingRooms.length ? remainingRooms[0] : null;
+  }
+
+  if (showMsg && hasAny) {
+    toast(`🗑️ Đã tự động đóng và xóa cuộc hội thoại ${target === 0 ? 'CSKH Website' : 'Phòng ' + target}`);
+  }
+}
+
+// Dọn dẹp ngầm các cuộc hội thoại của phòng đã trả (không còn ở) hoặc đã quá 1 phút không tương tác
+function purgeExpiredAndCheckedOutChats() {
+  const roomsInChat = [...new Set(CHAT.map(m => m.room))];
+  let purged = false;
+  roomsInChat.forEach(rNum => {
+    const rm = room(rNum);
+    // 1. Nếu là phòng khách sạn (rNum > 0) mà phòng đó không còn ở trạng thái Đang ở (tt !== 2) và không ở chế độ Demo -> xóa ngay
+    if (!DEMO_MODE && Number(rNum) > 0 && (!rm || rm.tt !== 2)) {
+      deleteRoomChat(rNum, false);
+      purged = true;
+      return;
     }
-  }, 1000);
+    // 2. Nếu cuộc hội thoại đã quá hạn 1 phút không tương tác -> tự động đóng & xóa luôn
+    if (isRoomChatClosed(rNum)) {
+      deleteRoomChat(rNum, true);
+      purged = true;
+    }
+  });
+  return purged;
+}
+
+function ensureChatTimer() {
+  if (chatTimerInterval) {
+    setTimeout(updateChatNoticeDOM, 0);
+    return;
+  }
+  chatTimerInterval = setInterval(() => {
+    if (purgeExpiredAndCheckedOutChats()) {
+      render();
+      return;
+    }
+    const activeRoom = G != null ? G : (tab === 'ch' ? C : null);
+    if (activeRoom != null) {
+      updateChatNoticeDOM();
+    }
+  }, 500);
 }
 
 function reopenChat(roomNum, who) {
-  chatClosed = false;
-  chatIdleSeconds = 0;
+  chatActiveMap[roomNum] = Date.now();
   render();
-  onChatUserActive();
-  toast('Đã mở lại cửa sổ chat!');
+  ensureChatTimer();
 }
 
 function chatBox(roomNum, who) {
   const isKhach = who === 'khach';
+  const roomTitle = roomNum === 0 ? 'Khách CSKH Website 24/7' : `Khách phòng ${roomNum}`;
 
-  if (chatClosed) {
-    return `
-      <h3 style="margin-top:16px">💬 Hội thoại ${isKhach ? 'với Lễ tân khách sạn' : `với Khách phòng ${roomNum}`}</h3>
-      <div class="chat-closed-box">
-        <div style="font-size:36px;margin-bottom:8px">🔒</div>
-        <b style="font-size:16px;color:var(--gold)">Cửa sổ chat đã tự động đóng</b>
-        <p class="mut" style="margin:8px auto 16px;max-width:380px;line-height:1.5">
-          Cửa sổ trò chuyện đã tạm đóng vì không có tin nhắn mới hoặc hoạt động chat trong 1 phút vừa qua.
-        </p>
-        <button class="bt pr" onclick="reopenChat(${roomNum}, '${who}')">💬 Mở lại cửa sổ chat</button>
-      </div>
-    `;
-  }
-
-  ensureChatTimer(roomNum, who);
+  ensureChatTimer();
 
   return `
-    <h3 style="margin-top:16px">💬 Hội thoại ${isKhach ? 'với Lễ tân khách sạn' : `với Khách phòng ${roomNum}`}</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;margin-bottom:8px">
+      <h3 style="margin:0">💬 Hội thoại ${isKhach ? 'với Lễ tân khách sạn' : `với ${roomTitle}`}</h3>
+      ${!isKhach ? `<button class="bt danger sm" onclick="deleteRoomChat(${roomNum}, true);render()">🗑️ Kết thúc &amp; Xóa hội thoại</button>` : ''}
+    </div>
     <div class="card">
       <!-- Thông báo đếm ngược: ẨN MẶC ĐỊNH, CHỈ HIỆN KHI KHÔNG TƯƠNG TÁC KHOẢNG 5 GIÂY -->
       <div class="chat-timer-notice" id="chat_timer_notice" style="display:none">
@@ -2092,10 +2311,9 @@ function chatBox(roomNum, who) {
           <span>⏳</span>
           <span>Không có tương tác. Cửa sổ chat sẽ tự động đóng sau <b id="chat_countdown">60</b>s.</span>
         </div>
-        <button class="bt sm" type="button" onclick="resetChatTimer()" style="padding:2px 8px;font-size:12px">Gia hạn 1p</button>
       </div>
 
-      <div id="msgs" class="msgs" onscroll="onChatUserActive()" onclick="onChatUserActive()"></div>
+      <div id="msgs" class="msgs" onscroll="if(!chatProgrammaticScroll)onChatUserActive()" onclick="onChatUserActive()"></div>
 
       <!-- Câu trả lời nhanh -->
       <div class="chat-quick">
@@ -2137,21 +2355,23 @@ function guiChat(who, roomNum) {
 }
 
 function chatTabHTML() {
+  purgeExpiredAndCheckedOutChats();
   const rs = [...new Set(CHAT.map(m => m.room))].sort((a, b) => a - b);
-  if (C) seen(C);
+  if (C != null && !rs.includes(C)) C = rs.length ? rs[0] : null;
+  if (C != null) seen(C);
 
   return `
     <div style="margin-bottom:12px">
-      <h3>Chọn phòng để hội thoại:</h3>
+      <h3>Chọn kênh hoặc phòng để hội thoại:</h3>
       <div class="fl" style="gap:8px">
         ${rs.length ? rs.map(r => `
-          <button class="bt ${C === r ? 'pr' : ''}" onclick="C=${r};chatClosed=false;resetChatTimer(false);render()">
-            Phòng ${r} ${unread(r) && C !== r ? '<span class="badge-count">Mới</span>' : ''}
+          <button class="bt ${C === r ? 'pr' : ''}" onclick="C=${r};render()">
+            ${r === 0 ? '👩‍💼 CSKH Website 24/7' : 'Phòng ' + r} ${unread(r) && C !== r ? '<span class="badge-count">Mới</span>' : ''}
           </button>
-        `).join('') : '<span class="mut">Chưa có tin nhắn nào từ khách hàng các phòng.</span>'}
+        `).join('') : '<span class="mut">Chưa có tin nhắn nào từ khách hàng.</span>'}
       </div>
     </div>
-    ${C ? chatBox(C, 'nv') : '<p class="mut" style="text-align:center;padding:20px">Vui lòng bấm chọn một phòng ở trên để mở khung chat.</p>'}
+    ${C != null ? chatBox(C, 'nv') : '<p class="mut" style="text-align:center;padding:20px">Vui lòng bấm chọn kênh CSKH Website 24/7 hoặc số phòng ở trên để mở khung chat.</p>'}
   `;
 }
 
@@ -2392,11 +2612,93 @@ function guestInactiveQRHTML(currentRoom) {
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button class="bt pr" onclick="location.reload()">🔄 Kiểm tra lại trạng thái</button>
           <a href="index.html" class="bt">🏨 Về trang chủ</a>
-          <a href="quantri.html" class="bt sm" style="opacity:0.8">🔑 Đăng nhập Lễ tân</a>
         </div>
       </div>
     </main>
   `;
+}
+
+let guestMenuCat = 'all';
+
+function setGuestMenuCat(c) {
+  guestMenuCat = c;
+  render();
+}
+
+function quickRoomReq(label, msgText) {
+  put('chat', {
+    id: newId('c'),
+    room: G,
+    from: 'khach',
+    name: `Khách P.${G}`,
+    text: `🛎️ [Yêu cầu nhanh] ${msgText}`,
+    t: Date.now()
+  });
+  chatActiveMap[G] = Date.now();
+  toast(`✅ Đã gửi yêu cầu "${label}" tới Lễ tân!`);
+  render();
+}
+
+function viewGuestBillModal() {
+  const currentRoom = room(G);
+  const k = currentRoom && currentRoom.k ? currentRoom.k : {
+    ten: 'Khách lưu trú (Chế độ Demo)',
+    ngay: new Date().toLocaleDateString('en-CA'),
+    gioVao: '14:00',
+    kieu: 'ngay',
+    sl: 1,
+    pp: 0,
+    coc: 0
+  };
+  const isDay = k.kieu !== 'gio';
+  const dg = currentRoom ? (isDay ? currentRoom.gn : currentRoom.gg) : 300000;
+  const sl = k.sl || 1;
+  const discRate = (isDay && sl >= 3) ? 0.15 : 0;
+  const tp = Math.round(sl * dg * (1 - discRate));
+
+  const roomOrders = ORD.filter(o =>
+    Number(o.room) === Number(G) && o.st !== 3 &&
+    (!k.checkinTime || !o.t || o.t >= k.checkinTime)
+  );
+  const qrTot = roomOrders.reduce((s, o) => s + (o.tot || 0), 0);
+  const chargedQr = roomOrders.filter(o => o.charged).reduce((s, o) => s + (o.tot || 0), 0);
+  const servTot = Math.max(0, (k.pp || 0) - chargedQr);
+  const tong = tp + servTot + qrTot;
+  const conLai = Math.max(0, tong - (k.coc || 0));
+
+  modal(
+    `🧾 Tạm Tính Chi Phí Lưu Trú — Phòng ${G}`,
+    `
+    <div style="background:color-mix(in srgb, var(--bd) 25%, transparent);padding:12px;border-radius:10px;font-size:13.5px;line-height:1.7">
+      <div style="display:flex;justify-content:space-between">
+        <span class="mut">Khách hàng:</span><b>${esc(k.ten)}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span class="mut">Thời gian nhận phòng:</span><b>${fmtD(k.ngay)} (${esc(k.gioVao || '14:00')})</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-top:1px dashed var(--bd);margin-top:6px;padding-top:6px">
+        <span>Tiền phòng (${sl} ${isDay ? 'ngày' : 'giờ'} × ${money(dg)}${discRate ? ' · Giảm 15%' : ''}):</span>
+        <b>${money(tp)}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span>Dịch vụ lễ tân (Giặt ủi, thuê xe...):</span>
+        <b>${money(servTot)}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span>Đồ ăn / uống gọi qua QR (${roomOrders.length} đơn):</span>
+        <b>${money(qrTot)}</b>
+      </div>
+      ${k.coc ? `<div style="display:flex;justify-content:space-between;color:var(--ok)"><span>Đã đặt cọc trước:</span><b>-${money(k.coc)}</b></div>` : ''}
+      <div style="display:flex;justify-content:space-between;border-top:2px solid var(--bd);margin-top:8px;padding-top:8px;font-size:16px">
+        <b>Tổng dự kiến cần thanh toán:</b>
+        <b style="color:var(--gold)">${money(conLai)}</b>
+      </div>
+    </div>
+    `,
+    null,
+    null,
+    'Đóng'
+  );
 }
 
 function guestHTML() {
@@ -2408,12 +2710,14 @@ function guestHTML() {
   }
 
   const tot = S.menu.reduce((t, m) => t + (cart[m.id] || 0) * m.p, 0);
+  const availMenu = S.menu.filter(m => m.st && m.cat !== 'serv' && (guestMenuCat === 'all' || m.cat === guestMenuCat));
 
   return `
     <header>
       <div class="hd">
         ${BRAND}
         <span class="sp"></span>
+        <button class="bt sm" onclick="viewGuestBillModal()" title="Xem tạm tính hóa đơn phòng">🧾 Xem Bill tạm tính</button>
         <span class="bd ${DEMO_MODE ? 's1' : 's0'}" style="font-size:14px;padding:4px 12px">
           ${DEMO_MODE ? 'THỬ NGHIỆM · ' : ''}Phòng ${G} (${currentRoom ? currentRoom.loai : ''})
         </span>
@@ -2426,16 +2730,38 @@ function guestHTML() {
       <button class="sos" onclick="baoKC()">🚨 BÁO ĐỘNG KHẨN CẤP / CẦN TRỢ GIÚP</button>
       ${guestAlerts()}
 
+      <!-- Tiện ích 1 chạm tại phòng -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="top" style="margin-bottom:8px">
+          <div>
+            <h3 style="margin:0;font-size:16px">🛎️ Yêu Cầu Dịch Vụ Nhanh (1 Chạm)</h3>
+            <span class="mut" style="font-size:12.5px">Bấm để gửi yêu cầu trực tiếp lên quầy Lễ tân &amp; Buồng phòng</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="bt sm" onclick="quickRoomReq('Dọn vệ sinh phòng', 'Nhờ buồng phòng lên dọn vệ sinh giúp phòng mình nhé!')">🧹 Dọn vệ sinh phòng</button>
+          <button class="bt sm" onclick="quickRoomReq('Thêm khăn tắm & nước suối', 'Cho phòng mình xin thêm khăn tắm sạch và 2 chai nước suối ạ!')">🧺 Thêm khăn &amp; nước</button>
+          <button class="bt sm" onclick="quickRoomReq('Gửi đồ giặt ủi', 'Phòng mình có đồ cần giặt ủi, nhờ nhân viên lên nhận giúp ạ!')">👕 Gửi đồ giặt ủi</button>
+          <button class="bt sm" onclick="quickRoomReq('Yêu cầu trả phòng (Check-out)', 'Phòng mình chuẩn bị Check-out, nhờ lễ tân kiểm tra phòng và chuẩn bị hóa đơn giúp nhé!')">🧾 Chuẩn bị Check-out</button>
+          <button class="bt pr sm" onclick="viewGuestBillModal()">💰 Xem tạm tính tiền phòng</button>
+        </div>
+      </div>
+
       <div class="card">
-        <div class="top" style="margin-bottom:12px">
+        <div class="top" style="margin-bottom:12px;flex-wrap:wrap;gap:8px">
           <div>
             <h3 style="margin:0">🍽️ Thực Đơn Ăn Uống Tại Phòng</h3>
             <span class="mut">Món ăn và thức uống sẽ được nhân viên mang đến tận phòng và tự động cộng vào hóa đơn trả phòng</span>
           </div>
+          <div style="display:flex;gap:6px">
+            <button class="bt sm ${guestMenuCat === 'all' ? 'pr' : ''}" onclick="setGuestMenuCat('all')">Tất cả</button>
+            <button class="bt sm ${guestMenuCat === 'food' ? 'pr' : ''}" onclick="setGuestMenuCat('food')">🍜 Món ăn</button>
+            <button class="bt sm ${guestMenuCat === 'drink' ? 'pr' : ''}" onclick="setGuestMenuCat('drink')">☕ Đồ uống</button>
+          </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:10px">
-          ${S.menu.filter(m => m.st && m.cat !== 'serv').map(m => `
+          ${availMenu.map(m => `
             <div class="top" style="padding:10px 0;border-bottom:1px solid var(--bd);gap:14px;align-items:center">
               <span class="ph" style="width:72px;height:72px;border-radius:12px;overflow:hidden;flex:none;box-shadow:0 3px 10px rgba(0,0,0,0.12)">
                 <img src="${m.img || ('images/' + m.id + '.jpg')}" onerror="this.src='images/${m.id}.jpg'" alt="" style="width:100%;height:100%;object-fit:cover">
@@ -2472,8 +2798,6 @@ function guestHTML() {
 
 /* --- Lắng nghe sự kiện --- */
 window.addEventListener('hashchange', () => {
-  chatClosed = false;
-  resetChatTimer(false);
   readHash();
   render();
 });

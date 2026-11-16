@@ -1,5 +1,19 @@
 {
   "functions": {
     "source": "functions"
+  },
+  "hosting": {
+    "public": ".",
+    "cleanUrls": true,
+    "rewrites": [
+      {
+        "source": "/admin",
+        "destination": "/quantri.html"
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/quantri.html"
+      }
+    ]
   }
 }

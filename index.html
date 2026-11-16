@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MY HOTEL – Nghỉ Dưỡng Sang Trọng & Đẳng Cấp</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏨</text></svg>">
+<link rel="stylesheet" href="chatbot.css">
 <style>
 :root {
   --navy: #0f2b48;
@@ -420,7 +421,11 @@ footer a:hover { color: var(--gold); }
 @media(max-width: 560px) {
   .f2, .room-pick { grid-template-columns: 1fr; }
   dialog { padding: 16px; width: 96vw; }
+  input, select, textarea { font-size: 16px; }
+  .hero { padding: 64px 16px 54px; }
+  section { padding: 48px 16px; }
 }
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 </style>
 </head>
 <body>
@@ -446,7 +451,6 @@ footer a:hover { color: var(--gold); }
       <a href="#hoadon">Tra cứu hóa đơn</a>
       <a href="#chinhanh">Chi nhánh</a>
       <a href="#lienhe">Liên hệ</a>
-      <a class="admin-link" href="quantri.html">Trang quản trị →</a>
     </nav>
 
     <button class="btn theme-toggle" onclick="toggleTheme()" title="Đổi chế độ Sáng/Tối">🌓</button>
@@ -535,6 +539,7 @@ footer a:hover { color: var(--gold); }
     <!-- Phòng Thường -->
     <div class="c room">
       <div class="im"><span>🛏️</span><img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=900&q=80" onerror="this.src='images/phong-thuong.jpg'" alt="Phòng Thường" loading="lazy"></div>
+      <span class="tag" id="avail_std" style="background:rgba(22,163,74,0.14);color:var(--ok)">🟢 Còn 15 phòng trống</span>
       <h3>Phòng Standard Deluxe</h3>
       <p>15 phòng · Diện tích 28m² · Giường King hoặc Twin · Wifi tốc độ cao · Smart TV 50"</p>
       <div class="price">300.000 ₫ <small>/ ngày</small></div>
@@ -548,7 +553,10 @@ footer a:hover { color: var(--gold); }
     <!-- Phòng VIP Suite -->
     <div class="c room vip">
       <div class="im"><span>👑</span><img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=80" onerror="this.src='images/phong-vip.jpg'" alt="Phòng VIP" loading="lazy"></div>
-      <span class="tag" style="background:#d4a343;color:#1b1405">Cao Cấp Hướng Biển</span>
+      <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+        <span class="tag" style="background:#d4a343;color:#1b1405">Cao Cấp Hướng Biển</span>
+        <span class="tag" id="avail_vip" style="background:rgba(22,163,74,0.14);color:var(--ok)">🟢 Còn 10 phòng trống</span>
+      </div>
       <h3>Phòng VIP Executive Suite</h3>
       <p>10 phòng · Diện tích 55m² · Tầm nhìn hướng biển · Ban công riêng · Bồn tắm nằm cao cấp · Bữa sáng miễn phí</p>
       <div class="price">600.000 ₫ <small>/ ngày</small></div>
@@ -589,12 +597,12 @@ footer a:hover { color: var(--gold); }
   </div>
 </div></section>
 
-<!-- Tra cứu hóa đơn -->
+<!-- Tra cứu đơn đặt phòng & hóa đơn -->
 <section id="hoadon" class="alt"><div class="in">
-  <h2>Tra Cứu Hóa Đơn Trực Tuyến</h2>
-  <p class="sub">Nhập mã hóa đơn bạn nhận được khi thanh toán trả phòng để kiểm tra chi tiết</p>
+  <h2>Tra Cứu Đặt Phòng &amp; Hóa Đơn Trực Tuyến</h2>
+  <p class="sub">Nhập <b>Mã hóa đơn</b> (HD...), <b>Mã đặt phòng</b> (bk_...) hoặc <b>Số điện thoại</b> của bạn để kiểm tra trạng thái</p>
   <div class="lk">
-    <input id="hc" placeholder="Ví dụ: HDABCD12 hoặc mã trên phiếu trả phòng" onkeydown="if(event.key==='Enter')tra()">
+    <input id="hc" placeholder="Nhập Mã hóa đơn (HD...), Mã đặt phòng (bk_...) hoặc SĐT..." onkeydown="if(event.key==='Enter')tra()">
     <button class="btn" onclick="tra()">Tra cứu</button>
   </div>
   <div id="rs"></div>
@@ -669,7 +677,7 @@ footer a:hover { color: var(--gold); }
       <p><a href="#home">Trang chủ</a></p>
       <p><a href="#phong">Phòng &amp; Báo giá</a></p>
       <p><a href="#hoadon">Tra cứu hóa đơn</a></p>
-      <p><a href="quantri.html">Hệ thống quản trị lễ tân</a></p>
+      <p><a href="#lienhe">Liên hệ &amp; Hỗ trợ</a></p>
     </div>
     <div>
       <h4>Trải nghiệm khách</h4>
@@ -679,7 +687,7 @@ footer a:hover { color: var(--gold); }
     </div>
   </div>
   <div class="bot-bar">
-    © 2026 MY HOTEL. Toàn bộ quyền được bảo lưu. · <a href="quantri.html" style="text-decoration:underline">Đăng nhập Quản trị viên</a>
+    © 2026 MY HOTEL. Toàn bộ quyền được bảo lưu.
   </div>
 </footer>
 
@@ -832,6 +840,17 @@ function toggleTheme() {
 }
 initTheme();
 
+// Hỗ trợ gõ #admin hoặc ?admin trên thanh địa chỉ để vào thẳng trang Quản trị
+function checkAdminShortcut() {
+  const h = location.hash.toLowerCase();
+  const q = location.search.toLowerCase();
+  if (h === '#admin' || h === '#/admin' || q.includes('admin')) {
+    location.replace('quantri.html');
+  }
+}
+checkAdminShortcut();
+window.addEventListener('hashchange', checkAdminShortcut);
+
 function toggleMenu() {
   const nav = $('nv');
   nav.classList.toggle('open');
@@ -840,12 +859,48 @@ function toggleMenu() {
 /* --- Khởi tạo Firestore hoặc Fallback Local --- */
 let DB = null;
 let WHY = '';
+function updateLiveRoomBadges() {
+  try {
+    const cur = JSON.parse(localStorage.getItem('ks_web_v1') || '{}');
+    if (cur && Array.isArray(cur.rooms) && cur.rooms.length) {
+      const emptyStd = cur.rooms.filter(r => r.loai !== 'VIP' && r.tt === 0).length;
+      const emptyVip = cur.rooms.filter(r => r.loai === 'VIP' && r.tt === 0).length;
+      const elStd = $('avail_std'), elVip = $('avail_vip');
+      if (elStd) {
+        elStd.textContent = emptyStd > 0 ? `🟢 Còn ${emptyStd} phòng trống` : '🔴 Tạm hết phòng trống';
+        elStd.style.color = emptyStd > 0 ? 'var(--ok)' : 'var(--bz)';
+      }
+      if (elVip) {
+        elVip.textContent = emptyVip > 0 ? `🟢 Còn ${emptyVip} phòng trống` : '🔴 Tạm hết phòng trống';
+        elVip.style.color = emptyVip > 0 ? 'var(--ok)' : 'var(--bz)';
+      }
+    }
+  } catch (e) {}
+}
+updateLiveRoomBadges();
+window.addEventListener('storage', e => { if (e.key === 'ks_web_v1') updateLiveRoomBadges(); });
+
 try {
   if (window.FIREBASE_CONFIG && window.firebase) {
     if (!firebase.apps.length) {
       firebase.initializeApp(FIREBASE_CONFIG);
     }
     DB = firebase.firestore();
+    // Đồng bộ thời gian thực trạng thái phòng & bảng giá từ Firestore về máy khách
+    DB.collection('system').doc('state').onSnapshot(doc => {
+      if (doc.exists && doc.data()) {
+        try {
+          const cur = JSON.parse(localStorage.getItem('ks_web_v1') || '{}');
+          const d = doc.data();
+          if (Array.isArray(d.rooms)) cur.rooms = d.rooms;
+          if (Array.isArray(d.menu)) cur.menu = d.menu;
+          if (d.settings) cur.settings = d.settings;
+          if (Array.isArray(d.dt)) cur.dt = d.dt;
+          localStorage.setItem('ks_web_v1', JSON.stringify(cur));
+          updateLiveRoomBadges();
+        } catch (err) {}
+      }
+    }, () => {});
   }
 } catch (e) {
   console.warn('Firebase init warning:', e);
@@ -864,6 +919,12 @@ function openBook(l) {
   const today = new Date().toLocaleDateString('en-CA');
   $('bd').min = today;
   if (!$('bd').value) $('bd').value = today;
+  try {
+    const savedProfile = JSON.parse(localStorage.getItem('ks_guest_profile') || '{}');
+    if (savedProfile.ten && !$('bn').value) $('bn').value = savedProfile.ten;
+    if (savedProfile.sdt && !$('bs').value) $('bs').value = savedProfile.sdt;
+    if (savedProfile.email && !$('be').value) $('be').value = savedProfile.email;
+  } catch (e) {}
   $('msg').textContent = '';
   calcBookTotal();
   dlg.showModal();
@@ -955,15 +1016,24 @@ async function sendBook() {
     }
   }
 
+  try {
+    localStorage.setItem('ks_guest_profile', JSON.stringify({ ten, sdt, email }));
+    localStorage.setItem('ks_chatbot_guest_name', `${ten} (${sdt})`);
+  } catch (e) {}
+
   m.style.color = 'var(--ok)';
   m.innerHTML = `
-    <b>🎉 Đã gửi yêu cầu đặt phòng thành công!</b><br>
-    Mã yêu cầu: <b>${id}</b><br>
-    Lễ tân sẽ liên hệ số <b>${esc(sdt)}</b> để xác nhận. Email kết quả sẽ được gửi đến <b>${esc(email)}</b> sau khi đơn được duyệt.
+    <div style="background:color-mix(in srgb, var(--ok) 12%, transparent);border:1px solid var(--ok);border-radius:10px;padding:12px;margin-top:6px">
+      <b>🎉 Đã gửi yêu cầu đặt phòng thành công!</b><br>
+      Mã đặt phòng: <b style="color:var(--gold)">${id}</b>
+      <button type="button" onclick="navigator.clipboard.writeText('${id}');this.textContent='✓ Đã chép'" style="margin-left:6px;padding:2px 8px;border-radius:6px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer;font-size:12px">📋 Sao chép mã</button><br>
+      <span style="font-size:13px">Lễ tân sẽ liên hệ số <b>${esc(sdt)}</b> để xác nhận. Email kết quả sẽ được gửi đến <b>${esc(email)}</b> sau khi đơn được duyệt.</span><br>
+      <button type="button" onclick="dlg.close();location.hash='#hoadon';$('hc').value='${id}';tra()" style="margin-top:8px;padding:6px 12px;border-radius:8px;border:0;background:var(--gold);color:#1b1405;font-weight:700;cursor:pointer;font-size:12.5px">🔍 Xem trạng thái đơn đặt phòng này →</button>
+    </div>
   `;
 
-  // Xóa form
-  ['bn', 'bs', 'be', 'bt'].forEach(i => $(i).value = '');
+  // Xóa ghi chú
+  $('bt').value = '';
   $('bk').disabled = false;
 }
 
@@ -1024,14 +1094,61 @@ function viewRoomDetail(type) {
   dlg_room.showModal();
 }
 
-/* --- Tra Cứu Hóa Đơn Trực Tuyến & In Hóa Đơn --- */
+/* --- Tra Cứu Đặt Phòng & Hóa Đơn Trực Tuyến --- */
 async function tra() {
-  const code = $('hc').value.trim().toUpperCase();
+  const raw = $('hc').value.trim();
+  const code = raw.toUpperCase();
   const r = $('rs');
-  if (!code) { r.innerHTML = ''; return; }
+  if (!raw) { r.innerHTML = ''; return; }
 
-  r.innerHTML = '<p style="text-align:center;padding:14px">Đang tra cứu dữ liệu hóa đơn...</p>';
+  r.innerHTML = '<p style="text-align:center;padding:14px">Đang tra cứu dữ liệu trên hệ thống...</p>';
 
+  // A. Kiểm tra xem người dùng nhập Mã đặt phòng (bk_...) hoặc Số điện thoại đặt phòng
+  let matchedBookings = [];
+  if (DB) {
+    try {
+      if (raw.toLowerCase().startsWith('bk_')) {
+        const bDoc = await DB.collection('bookings').doc(raw.toLowerCase()).get();
+        if (bDoc.exists) matchedBookings.push(bDoc.data());
+      } else if (/^[0-9+\s]{8,15}$/.test(raw)) {
+        const snap = await DB.collection('bookings').where('sdt', '==', raw).get();
+        snap.forEach(d => matchedBookings.push(d.data()));
+      }
+    } catch (e) {}
+  }
+
+  if (!matchedBookings.length) {
+    try {
+      const localBk = JSON.parse(localStorage.getItem('ks_bookings') || '[]');
+      matchedBookings = localBk.filter(b =>
+        (b.id && b.id.toLowerCase() === raw.toLowerCase()) ||
+        (b.sdt && b.sdt.replace(/\s+/g, '') === raw.replace(/\s+/g, ''))
+      );
+    } catch (e) {}
+  }
+
+  if (matchedBookings.length) {
+    r.innerHTML = matchedBookings.sort((a, b) => (b.t || 0) - (a.t || 0)).map(b => {
+      const stText = b.st === 1 ? '✅ Đã duyệt & Xếp phòng' : b.st === 2 ? '❌ Đã hủy' : '⏳ Đang chờ lễ tân xác nhận';
+      const stColor = b.st === 1 ? 'var(--ok)' : b.st === 2 ? 'var(--bz)' : 'var(--wn)';
+      const durText = b.kieu === 'gio' ? `${b.gio || 1} giờ (lúc ${b.gioVao || '14:00'})` : `${b.dem || 1} đêm`;
+      return `
+        <div class="c" style="text-align:left;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--gold);padding-bottom:10px;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+            <h3 style="margin:0;color:var(--navy)">ĐƠN ĐẶT PHÒNG: ${esc(b.id)}</h3>
+            <span class="tag" style="margin:0;background:${stColor};color:#fff">${stText}</span>
+          </div>
+          <div class="row"><span>Khách hàng</span><b>${esc(b.ten)} · ${esc(b.sdt)}</b></div>
+          <div class="row"><span>Hạng phòng đăng ký</span><b>${esc(b.loai)}</b></div>
+          <div class="row"><span>Số phòng được xếp</span><b>${b.assignedRoom ? 'Phòng ' + esc(b.assignedRoom) : 'Sẽ thông báo khi duyệt'}</b></div>
+          <div class="row"><span>Ngày nhận &amp; Thời lượng</span><b>${esc(b.ngay)} · ${esc(durText)}</b></div>
+        </div>
+      `;
+    }).join('');
+    return;
+  }
+
+  // B. Tra cứu Hóa đơn thanh toán (HD...)
   let v = null;
 
   // 1. Thử tìm trong Firestore nếu có kết nối
@@ -1057,8 +1174,8 @@ async function tra() {
   if (!v) {
     r.innerHTML = `
       <div class="c" style="text-align:center;color:var(--bz)">
-        <p>❌ Không tìm thấy thông tin hóa đơn với mã <b>${esc(code)}</b>.</p>
-        <small class="mut">Vui lòng kiểm tra lại mã trên phiếu thu hoặc liên hệ tổng đài 0900 000 000 để được hỗ trợ.</small>
+        <p>❌ Không tìm thấy đơn đặt phòng hoặc hóa đơn với thông tin <b>${esc(raw)}</b>.</p>
+        <small class="mut">Vui lòng kiểm tra lại Mã hóa đơn (HD...), Mã đặt phòng (bk_...) hoặc Số điện thoại đặt phòng.</small>
       </div>
     `;
     return;
@@ -1134,6 +1251,24 @@ function sendContact() {
     localStorage.setItem('ks_feedback', JSON.stringify(list));
   } catch (e) {}
 
+  // Đồng bộ thẳng sang kênh CSKH Website 24/7 trong trang Quản trị Lễ tân
+  const cskhMsg = {
+    id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+    room: 0,
+    from: 'khach',
+    name: `${name} (${contact})`,
+    text: `[Liên hệ Web] ${msg}`,
+    t: Date.now()
+  };
+  try {
+    const chatArr = JSON.parse(localStorage.getItem('ks_chat') || '[]');
+    chatArr.push(cskhMsg);
+    localStorage.setItem('ks_chat', JSON.stringify(chatArr));
+  } catch (e) {}
+  if (DB) {
+    try { DB.collection('chat').doc(cskhMsg.id).set(cskhMsg).catch(() => {}); } catch (e) {}
+  }
+
   setTimeout(() => {
     st.textContent = 'Cảm ơn quý khách! MY HOTEL đã nhận được tin nhắn và sẽ phản hồi sớm nhất.';
     $('ct_name').value = '';
@@ -1142,5 +1277,6 @@ function sendContact() {
   }, 400);
 }
 </script>
+<script src="chatbot.js"></script>
 </body>
 </html>
