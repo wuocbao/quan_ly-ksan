@@ -50,10 +50,10 @@ const DEFAULT_MENU = [
   { id: 'ns', n: 'Nước suối Dasani', p: 15000, ic: '💧', cat: 'drink', st: 1, img: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=500&q=80' },
   { id: 'cc', n: 'Coca-Cola lon', p: 25000, ic: '🥤', cat: 'drink', st: 1, img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=500&q=80' },
   { id: 'bi', n: 'Bia Heineken lon', p: 35000, ic: '🍺', cat: 'drink', st: 1, img: 'https://images.unsplash.com/photo-1608270191986-e97d1052136e?auto=format&fit=crop&w=500&q=80' },
-  { id: 'bm', n: 'Bánh mì ốp la pate', p: 35000, ic: '🥖', cat: 'food', st: 1, img: 'images/menu-banhmi.jpg' },
+  { id: 'bm', n: 'Bánh mì ốp la pate', p: 35000, ic: '🥖', cat: 'food', st: 1, img: 'images/menu-banhmi.jpg', fb: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&w=500&q=80' },
   { id: 'pho', n: 'Phở bò đặc biệt', p: 65000, ic: '🍜', cat: 'food', st: 1, img: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=500&q=80' },
-  { id: 'com', n: 'Cơm gà xối mỡ', p: 70000, ic: '🍗', cat: 'food', st: 1, img: 'images/menu-comga.jpg' },
-  { id: 'mx', n: 'Mì xào hải sản', p: 75000, ic: '🍝', cat: 'food', st: 1, img: 'images/menu-mixao.jpg' },
+  { id: 'com', n: 'Cơm gà xối mỡ', p: 70000, ic: '🍗', cat: 'food', st: 1, img: 'images/menu-comga.jpg', fb: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=500&q=80' },
+  { id: 'mx', n: 'Mì xào hải sản', p: 75000, ic: '🍝', cat: 'food', st: 1, img: 'images/menu-mixao.jpg', fb: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=500&q=80' },
   { id: 'tc', n: 'Đĩa trái cây tươi', p: 45000, ic: '🍉', cat: 'food', st: 1, img: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=500&q=80' },
   { id: 'gu', n: 'Dịch vụ giặt ủi thường', p: 50000, ic: '🧺', cat: 'serv', st: 1, img: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=500&q=80' },
   { id: 'tx', n: 'Thuê xe máy (1 ngày)', p: 150000, ic: '🛵', cat: 'serv', st: 1, img: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=500&q=80' }
@@ -66,7 +66,8 @@ const DEFAULT_SETTINGS = {
   hotelName: 'MY HOTEL RESORT',
   hotelAddress: '123 Đường Bờ Biển, Bãi Sau, TP. Vũng Tàu',
   hotline: '0900 000 000',
-  email: 'hotro@myhotel.vn',
+  email: 'qbao308.01@gmail.com',
+  ownerEmail: 'qbao308.01@gmail.com',
   bankName: 'MBBANK',
   bankAccount: '0900000000',
   bankOwner: 'MY HOTEL'
@@ -112,9 +113,18 @@ function load() {
     S.menu.forEach(m => {
       const d = DEFAULT_MENU.find(x => x.id === m.id);
       if (d && (!m.img || OUTDATED_MENU_IMGS.some(x => m.img.includes(x)))) m.img = d.img;
+      if (d && d.fb) m.fb = d.fb;
     });
   }
   if (!S.settings) S.settings = DEFAULT_SETTINGS;
+  else {
+    if (!S.settings.ownerEmail || S.settings.ownerEmail === 'baoq5342@gmail.com') {
+      S.settings.ownerEmail = 'qbao308.01@gmail.com';
+    }
+    if (!S.settings.email || S.settings.email === 'hotro@myhotel.vn') {
+      S.settings.email = 'qbao308.01@gmail.com';
+    }
+  }
   if (!S.seen) S.seen = {};
 
   try {
@@ -973,6 +983,7 @@ function luuCaiDat() {
     hotelAddress: val('st_addr') || '',
     hotline: val('st_hotline') || '',
     email: val('st_email') || '',
+    ownerEmail: val('st_owner_email') || '',
     bankName: val('st_bank') || 'MBBANK',
     bankAccount: val('st_acc') || '',
     bankOwner: val('st_owner') || '',
@@ -1450,7 +1461,7 @@ function menuTabHTML() {
             <tr>
               <td style="width:60px;padding:6px 10px">
                 <div style="width:50px;height:50px;border-radius:10px;overflow:hidden;background:var(--bd);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.12)">
-                  <img src="${m.img || ('images/' + m.id + '.jpg')}" onerror="this.src='images/${m.id}.jpg'" alt="" style="width:100%;height:100%;object-fit:cover">
+                  <img src="${m.img || ('images/' + m.id + '.jpg')}" onerror="this.onerror=null;this.src='${m.fb || ('images/' + m.id + '.jpg')}'" alt="" style="width:100%;height:100%;object-fit:cover">
                 </div>
               </td>
               <td><b>${esc(m.n)}</b></td>
@@ -1482,7 +1493,10 @@ function settingsTabHTML() {
       </div>
       <div class="fl">
         <label>Địa chỉ khách sạn<input id="st_addr" value="${esc(s.hotelAddress)}"></label>
-        <label>Email hỗ trợ<input id="st_email" value="${esc(s.email)}"></label>
+        <label>Email hỗ trợ hiển thị trên web<input id="st_email" value="${esc(s.email)}"></label>
+      </div>
+      <div class="fl">
+        <label style="flex:1">📩 Email gốc của bạn (Tự động nhận thông báo &amp; làm email gửi xác nhận khi đơn đặt phòng được duyệt)<input id="st_owner_email" placeholder="qbao308.01@gmail.com" value="${esc(s.ownerEmail || 'qbao308.01@gmail.com')}"></label>
       </div>
 
       <h4 style="margin:16px 0 6px;color:var(--gold)">Cấu hình VietQR Chuyển Khoản Tự Động</h4>
@@ -1834,18 +1848,18 @@ function doiBK(id, st) {
     const nb = Object.assign({}, b, { st, by: cur.n });
     if (st === 1) {
       nb.approved = true;
-      nb.emailStatus = b.email ? 'sending' : 'missing';
+      nb.emailStatus = 'sending';
     }
     put('bookings', nb);
-    toast(st === 1 ? 'Đã duyệt đơn — trạng thái: đã liên hệ' : 'Đã hủy yêu cầu');
-    if (st === 1 && b.email) sendBookingConfirmEmail(nb);
+    toast(st === 1 ? 'Đã duyệt đơn — đang tự động gửi email xác nhận' : 'Đã hủy yêu cầu');
+    if (st === 1) sendBookingConfirmEmail(nb);
   }
 }
 
 /* --- Gửi email xác nhận khi lễ tân duyệt đơn --- */
 function emailConfigured() {
   const s = S && S.settings || {};
-  return !!(s.gasMailUrl || (s.ejsService && s.ejsTemplate && s.ejsKey));
+  return !!(s.ownerEmail || s.gasMailUrl || (s.ejsService && s.ejsTemplate && s.ejsKey));
 }
 
 function huongDanGAS() {
@@ -1853,26 +1867,31 @@ function huongDanGAS() {
   var d = JSON.parse(e.postData.contents);
   MailApp.sendEmail({
     to: d.to,
+    cc: d.cc || "",
     subject: d.subject,
-    body: d.body
+    body: d.body,
+    htmlBody: d.html || ""
   });
   return ContentService.createTextOutput("OK");
 }`;
   modal(
-    '🚀 Hướng dẫn bật Auto Gửi Email bằng Google Apps Script (Miễn phí)',
+    '🚀 Hướng dẫn bật Auto Gửi Email tới Khách & Chủ KS (1 phút)',
     `
+    <p class="mut" style="margin:0 0 8px;font-size:13px">
+      💡 <b>Lưu ý:</b> Email gửi về hộp thư của bạn (<code>${esc((S.settings && S.settings.ownerEmail) || 'qbao308.01@gmail.com')}</code>) đã được bật tự động qua <b>FormSubmit</b>. Nếu bạn muốn hệ thống tự động gửi email từ chính Gmail của bạn tới cả email bất kỳ của khách hàng, hãy dán đoạn mã dưới đây vào Google Apps Script:
+    </p>
     <ol style="padding-left:18px;font-size:13.5px;line-height:1.65;margin:0 0 12px">
       <li>Mở <a href="https://script.google.com/home/start" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700">script.google.com</a> → Bấm <b>Dự án mới (New project)</b>.</li>
-      <li>Xóa đoạn mã cũ và dán đoạn mã 9 dòng bên dưới vào:</li>
+      <li>Xóa đoạn mã cũ và dán đoạn mã bên dưới vào:</li>
     </ol>
-    <textarea id="gas_code_box" rows="8" readonly style="font-family:monospace;font-size:12.5px">${code}</textarea>
+    <textarea id="gas_code_box" rows="9" readonly style="font-family:monospace;font-size:12.5px">${code}</textarea>
     <div style="margin:6px 0 12px">
       <button type="button" class="bt sm" onclick="navigator.clipboard.writeText(document.getElementById('gas_code_box').value);toast('📋 Đã sao chép mã Apps Script!')">📋 Sao chép đoạn mã trên</button>
     </div>
     <ol start="3" style="padding-left:18px;font-size:13.5px;line-height:1.65;margin:0">
-      <li>Bấm nút <b>Triển khai (Deploy)</b> ở góc trên bên phải → <b>Tùy chọn triển khai mới (New deployment)</b>.</li>
-      <li>Chọn loại: <b>Ứng dụng web (Web app)</b> → Mục <i>Ai có quyền truy cập (Who has access)</i> chọn <b>Bất kỳ ai (Anyone)</b> → Bấm <b>Triển khai</b> và Cấp quyền Gmail.</li>
-      <li>Copy đường link <code>https://script.google.com/macros/s/.../exec</code> dán vào ô <b>Google Apps Script Web App URL</b> trong Cài đặt và bấm Lưu. Từ đó về sau bấm Duyệt đơn sẽ tự động gửi mail 100%!</li>
+      <li>Bấm nút <b>Triển khai (Deploy)</b> → <b>Tùy chọn triển khai mới (New deployment)</b>.</li>
+      <li>Chọn loại: <b>Ứng dụng web (Web app)</b> → Mục <i>Ai có quyền truy cập</i> chọn <b>Bất kỳ ai (Anyone)</b> → Bấm <b>Triển khai</b> và Cấp quyền Gmail.</li>
+      <li>Copy đường link <code>https://script.google.com/macros/s/.../exec</code> dán vào ô <b>Google Apps Script Web App URL</b> trong Cài đặt và bấm Lưu.</li>
     </ol>
     `,
     null,
@@ -1886,24 +1905,67 @@ function setBookingEmailStatus(id, emailStatus) {
   if (b) put('bookings', Object.assign({}, b, { emailStatus }));
 }
 
+function calcBookingEstAmount(b) {
+  const isHour = b.kieu === 'gio';
+  const isVip = (b.loai || '').toUpperCase().includes('VIP');
+  const rate = isHour ? (isVip ? 120000 : 60000) : (isVip ? 600000 : 300000);
+  const qty = (isHour ? b.gio : b.dem) || 1;
+  const disc = (!isHour && qty >= 3) ? 0.15 : 0;
+  return { rate, qty, disc, total: Math.round(rate * qty * (1 - disc)) };
+}
+
 function bookingEmailText(b) {
   const s = S.settings || DEFAULT_SETTINGS;
+  const est = calcBookingEstAmount(b);
   return `Kính gửi Quý khách ${b.ten},
 
-${s.hotelName || 'MY HOTEL'} xin xác nhận đơn đặt phòng của Quý khách đã được DUYỆT.
+${s.hotelName || 'MY HOTEL'} xin xác nhận đơn đặt phòng trực tuyến của Quý khách đã được DUYỆT.
 
-• Mã đơn: ${b.id}
-• Loại phòng: ${b.loai || '—'}${b.assignedRoom ? `\n• Số phòng: Phòng ${b.assignedRoom}` : ''}
-• Ngày nhận phòng: ${fmtD(b.ngay)} (${b.kieu === 'gio' ? 'lúc ' + (b.gioVao || '—') : 'từ 14:00'})
+• Mã đơn đặt phòng: ${b.id}
+• Họ và tên khách: ${b.ten} (${b.sdt})
+• Loại phòng: ${b.loai || '—'}${b.assignedRoom ? `\n• Số phòng đã xếp: Phòng ${b.assignedRoom}` : ''}
+• Ngày nhận phòng: ${fmtD(b.ngay)} (${b.kieu === 'gio' ? 'lúc ' + (b.gioVao || '14:00') : 'từ 14:00'})
 • Hình thức thuê: ${b.kieu === 'gio' ? 'Theo giờ' : 'Theo ngày'} – ${bkDur(b)}
+• Tạm tính tiền phòng: ${money(est.total)}${est.disc ? ' (Đã giảm 15% ưu đãi từ 3 đêm)' : ''}
 
-Khi đến nhận phòng, Quý khách vui lòng mang theo CCCD/Hộ chiếu. Sau khi Check-in, Quý khách có thể quét mã QR trong phòng để gọi món và chat với lễ tân.
+Khi đến nhận phòng, Quý khách vui lòng mang theo CCCD/Hộ chiếu. Sau khi Check-in, Quý khách có thể quét mã QR trong phòng để gọi món và chat với lễ tân 24/7.
 
 Mọi thắc mắc xin liên hệ hotline ${s.hotline || ''}${s.email ? ' hoặc email ' + s.email : ''}.
 Địa chỉ: ${s.hotelAddress || ''}
 
 Trân trọng,
 ${cur ? cur.n : 'Lễ tân'} – ${s.hotelName || 'MY HOTEL'}`;
+}
+
+function bookingEmailHTML(b) {
+  const s = S.settings || DEFAULT_SETTINGS;
+  const est = calcBookingEstAmount(b);
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;border:1px solid #d9e3dc;border-radius:12px;overflow:hidden;color:#1e293b">
+      <div style="background:#0f2b48;color:#ffffff;padding:18px 22px;border-bottom:3px solid #d4a343">
+        <h2 style="margin:0;color:#d4a343;font-family:Georgia,serif">${esc(s.hotelName || 'MY HOTEL RESORT')}</h2>
+        <p style="margin:4px 0 0;font-size:13px;color:#cbd5e1">Xác nhận đặt phòng trực tuyến thành công</p>
+      </div>
+      <div style="padding:20px 22px;font-size:14px;line-height:1.6">
+        <p>Kính gửi Quý khách <b>${esc(b.ten)}</b>,</p>
+        <p>Đơn đặt phòng trực tuyến của Quý khách tại <b>${esc(s.hotelName || 'MY HOTEL RESORT')}</b> đã được lễ tân <b>XÁC NHẬN</b>:</p>
+        <table style="width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px">
+          <tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b">Mã đơn đặt phòng</td><td style="padding:8px;border-bottom:1px solid #e2e8f0"><b>${esc(b.id)}</b></td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b">Khách hàng</td><td style="padding:8px;border-bottom:1px solid #e2e8f0"><b>${esc(b.ten)}</b> · ${esc(b.sdt)}</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b">Hạng phòng</td><td style="padding:8px;border-bottom:1px solid #e2e8f0"><b>${esc(b.loai)}</b></td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b">Số phòng được xếp</td><td style="padding:8px;border-bottom:1px solid #e2e8f0"><b style="color:#16a34a">${b.assignedRoom ? 'Phòng ' + esc(b.assignedRoom) : 'Sẽ thông báo khi Check-in'}</b></td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b">Ngày nhận phòng</td><td style="padding:8px;border-bottom:1px solid #e2e8f0">${fmtD(b.ngay)} (${b.kieu === 'gio' ? 'lúc ' + esc(b.gioVao || '14:00') : 'từ 14:00'})</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b">Thời lượng lưu trú</td><td style="padding:8px;border-bottom:1px solid #e2e8f0">${b.kieu === 'gio' ? 'Theo giờ' : 'Theo ngày'} – <b>${bkDur(b)}</b></td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b">Tổng tiền tạm tính</td><td style="padding:8px;border-bottom:1px solid #e2e8f0"><b style="color:#b88b30;font-size:15px">${money(est.total)}</b>${est.disc ? ' <small style="color:#16a34a">(Giảm 15%)</small>' : ''}</td></tr>
+        </table>
+        <p>Khi đến nhận phòng, Quý khách vui lòng xuất trình <b>CCCD/Hộ chiếu</b> tại quầy lễ tân.</p>
+        <p style="margin-bottom:0">Trân trọng,<br><b>${esc(cur ? cur.n : 'Lễ tân')} – ${esc(s.hotelName || 'MY HOTEL RESORT')}</b></p>
+      </div>
+      <div style="background:#071728;color:#cbd5e1;padding:12px 22px;font-size:12px">
+        📍 ${esc(s.hotelAddress || '')} · 📞 Hotline: ${esc(s.hotline || '')}
+      </div>
+    </div>
+  `;
 }
 
 function openMailtoFallback(b) {
@@ -1938,59 +2000,96 @@ function openMailtoFallback(b) {
 }
 
 function sendBookingConfirmEmail(b) {
-  if (!b || !b.email) return;
+  if (!b) return;
   const s = S.settings || DEFAULT_SETTINGS;
-  const subject = `[${s.hotelName || 'MY HOTEL'}] Xác nhận đặt phòng ${b.id}`;
+  const ownerMail = (s.ownerEmail || 'qbao308.01@gmail.com').trim();
+  const guestMail = (b.email || '').trim();
+  const subject = `[${s.hotelName || 'MY HOTEL'}] Xác nhận đặt phòng ${b.id} - ${b.ten}`;
+  const est = calcBookingEstAmount(b);
 
-  // 1. Ưu tiên gửi tự động qua Google Apps Script Web App URL (nếu đã cấu hình)
+  // 1. Gửi qua Google Apps Script Web App URL (Gửi được cho cả email khách & CC về email chủ KS)
   if (s.gasMailUrl && s.gasMailUrl.startsWith('https://script.google.com/')) {
     fetch(s.gasMailUrl.trim(), {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
-        to: b.email,
+        to: guestMail || ownerMail,
+        cc: (guestMail && ownerMail && guestMail !== ownerMail) ? ownerMail : '',
         subject,
-        body: bookingEmailText(b)
+        body: bookingEmailText(b),
+        html: bookingEmailHTML(b)
       })
     }).then(() => {
       setBookingEmailStatus(b.id, 'sent');
-      toast(`📧 Đã tự động gửi email xác nhận tới ${b.email}`);
+      toast(`📧 Đã tự động gửi email xác nhận tới ${guestMail || ownerMail}`);
     }).catch(e => {
       console.warn('GAS mail error:', e);
       setBookingEmailStatus(b.id, 'failed');
-      toast('⚠ Lỗi gửi tự động qua Apps Script, mở bảng gửi dự phòng');
-      openMailtoFallback(b);
     });
     return;
   }
 
-  // 2. Gửi tự động qua EmailJS (nếu đã cấu hình)
-  if (!emailConfigured() || typeof emailjs === 'undefined') {
-    setBookingEmailStatus(b.id, 'manual');
-    openMailtoFallback(b);
+  // 2. Gửi qua EmailJS (nếu đã cấu hình 3 mã EmailJS)
+  if (s.ejsService && s.ejsTemplate && s.ejsKey && typeof emailjs !== 'undefined') {
+    emailjs.send(s.ejsService, s.ejsTemplate, {
+      to_email: guestMail || ownerMail,
+      to_name: b.ten,
+      hotel_name: s.hotelName,
+      room_type: b.loai || '',
+      room_number: b.assignedRoom ? `Phòng ${b.assignedRoom}` : 'Sẽ được xếp khi nhận phòng',
+      checkin_date: fmtD(b.ngay),
+      nights: bkDur(b),
+      hotline: s.hotline,
+      booking_id: b.id,
+      staff_name: cur ? cur.n : 'Lễ tân',
+      message: bookingEmailText(b)
+    }, { publicKey: s.ejsKey }).then(() => {
+      setBookingEmailStatus(b.id, 'sent');
+      toast(`📧 Đã tự động gửi email xác nhận tới ${guestMail || ownerMail}`);
+    }).catch(e => {
+      console.warn('EmailJS error:', e);
+      setBookingEmailStatus(b.id, 'failed');
+    });
     return;
   }
 
-  emailjs.send(s.ejsService, s.ejsTemplate, {
-    to_email: b.email,
-    to_name: b.ten,
-    hotel_name: s.hotelName,
-    room_type: b.loai || '',
-    room_number: b.assignedRoom ? `Phòng ${b.assignedRoom}` : 'Sẽ được xếp khi nhận phòng',
-    checkin_date: fmtD(b.ngay),
-    nights: bkDur(b),
-    hotline: s.hotline,
-    booking_id: b.id,
-    staff_name: cur ? cur.n : 'Lễ tân',
-    message: bookingEmailText(b)
-  }, { publicKey: s.ejsKey }).then(() => {
+  // 3. Tự động gửi 100% không cần cấu hình qua FormSubmit AJAX về Email chủ khách sạn (và CC cho khách)
+  const targetEndpoint = ownerMail || guestMail;
+  if (!targetEndpoint) return;
+
+  fetch(`https://formsubmit.co/ajax/${encodeURIComponent(targetEndpoint)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      _subject: subject,
+      _template: 'table',
+      _cc: (guestMail && guestMail !== targetEndpoint) ? guestMail : undefined,
+      _replyto: guestMail || undefined,
+      'Trạng thái đơn': '✅ ĐÃ DUYỆT & XÁC NHẬN ĐẶT PHÒNG',
+      'Mã đặt phòng': b.id,
+      'Họ tên khách hàng': b.ten,
+      'Số điện thoại': b.sdt,
+      'Email khách hàng': guestMail || 'Không có',
+      'Loại phòng': b.loai || 'Thường',
+      'Phòng được xếp': b.assignedRoom ? `Phòng ${b.assignedRoom}` : 'Xếp khi nhận phòng',
+      'Ngày nhận phòng': `${fmtD(b.ngay)} (${b.kieu === 'gio' ? 'lúc ' + (b.gioVao || '14:00') : 'từ 14:00'})`,
+      'Thời lượng thuê': `${b.kieu === 'gio' ? 'Theo giờ' : 'Theo ngày'} – ${bkDur(b)}`,
+      'Tổng tiền tạm tính': money(est.total),
+      'Ghi chú của khách': b.note || 'Không có',
+      'Nhân viên duyệt': cur ? cur.n : 'Lễ tân',
+      'Nội dung xác nhận': bookingEmailText(b)
+    })
+  }).then(r => r.json()).then(res => {
     setBookingEmailStatus(b.id, 'sent');
-    toast(`📧 Đã gửi email xác nhận tới ${b.email}`);
-  }).catch(e => {
-    console.warn('EmailJS error:', e);
-    setBookingEmailStatus(b.id, 'failed');
-    toast('⚠ Gửi email thất bại: ' + ((e && (e.text || e.message)) || 'lỗi không xác định'));
+    toast(`📧 Đã tự động gửi email xác nhận về ${targetEndpoint}${guestMail && guestMail !== targetEndpoint ? ' (CC: ' + guestMail + ')' : ''}!`);
+  }).catch(err => {
+    console.warn('Auto email fallback warning:', err);
+    setBookingEmailStatus(b.id, 'manual');
+    openMailtoFallback(b);
   });
 }
 
@@ -2064,13 +2163,13 @@ function xepPhongTuBooking(id) {
         st: 1,
         assignedRoom: ma,
         approved: true,
-        emailStatus: b.email ? 'sending' : 'missing',
+        emailStatus: 'sending',
         by: cur.n
       });
       put('bookings', nb);
       render();
       toast(`Đã xếp khách ${b.ten} vào Phòng ${ma} thành công!`);
-      if (b.email) sendBookingConfirmEmail(nb);
+      sendBookingConfirmEmail(nb);
     },
     'Xác nhận xếp phòng'
   );
@@ -2764,7 +2863,7 @@ function guestHTML() {
           ${availMenu.map(m => `
             <div class="top" style="padding:10px 0;border-bottom:1px solid var(--bd);gap:14px;align-items:center">
               <span class="ph" style="width:72px;height:72px;border-radius:12px;overflow:hidden;flex:none;box-shadow:0 3px 10px rgba(0,0,0,0.12)">
-                <img src="${m.img || ('images/' + m.id + '.jpg')}" onerror="this.src='images/${m.id}.jpg'" alt="" style="width:100%;height:100%;object-fit:cover">
+                <img src="${m.img || ('images/' + m.id + '.jpg')}" onerror="this.onerror=null;this.src='${m.fb || ('images/' + m.id + '.jpg')}'" alt="" style="width:100%;height:100%;object-fit:cover">
               </span>
               <div style="flex:1">
                 <b style="font-size:15px">${esc(m.n)}</b><br>

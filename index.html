@@ -369,7 +369,11 @@ label { display: block; font-size: 13px; font-weight: 600; color: var(--mut); ma
   transition: border-color .2s, transform .2s, box-shadow .2s; font: inherit;
 }
 .rp-opt:hover { transform: translateY(-2px); }
-.rp-opt img { display: block; width: 100%; height: 96px; object-fit: cover; }
+.rp-opt img {
+  display: block; width: 100%; height: 96px; object-fit: cover;
+  background: linear-gradient(135deg, #1e4b75, #0f2b48);
+  color: transparent;
+}
 .rp-info { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; font-size: 13px; }
 .rp-info small { color: var(--mut); font-size: 12px; }
 .rp-info em { font-style: normal; font-weight: 700; color: var(--gold); }
@@ -523,7 +527,7 @@ html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
       <p>Tặng vé buffet sáng ẩm thực Á - Âu tại nhà hàng tầng 1 khi quý khách đặt phòng VIP Suite.</p>
     </div>
     <div class="c">
-      <div class="im"><span>🍹</span><img src="images/ud-qr.jpg" alt="Đặt món qua QR" loading="lazy"></div>
+      <div class="im"><span>🍹</span><img src="images/ud-qr.jpg" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=700&q=80'" alt="Đặt món qua QR" loading="lazy"></div>
       <span class="tag">TIỆN ÍCH MỚI</span>
       <h3>Đặt Món Qua QR Phòng</h3>
       <p>Quét mã QR trong phòng để gọi món ăn thức uống tận phòng nhanh chóng, thanh toán khi check-out.</p>
@@ -575,17 +579,17 @@ html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
   <p class="sub">Đem lại trải nghiệm thuận tiện và thoải mái nhất cho kỳ nghỉ của bạn</p>
   <div class="g">
     <div class="c" style="cursor:pointer" onclick="openQRDemo()" title="Bấm để thử gọi món qua QR">
-      <div class="im"><span>📱</span><img src="images/dv-qr.jpg" alt="Gọi món QR" loading="lazy"></div>
+      <div class="im"><span>📱</span><img src="images/dv-qr.jpg" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=700&q=80'" alt="Gọi món QR" loading="lazy"></div>
       <h3>Gọi Món Qua Mã QR</h3>
       <p>Quét mã QR dán trong phòng bằng điện thoại để xem menu và gọi đồ ăn nước uống ngay.</p>
     </div>
     <div class="c" style="cursor:pointer" onclick="openQRDemo()" title="Bấm để chat trực tiếp với lễ tân">
-      <div class="im"><span>💬</span><img src="images/dv-chat.jpg" alt="Chat lễ tân" loading="lazy"></div>
+      <div class="im"><span>💬</span><img src="images/dv-chat.jpg" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=700&q=80'" alt="Chat lễ tân" loading="lazy"></div>
       <h3>Live Chat Với Lễ Tân</h3>
       <p>Cần hỗ trợ, xin thêm khăn hoặc tư vấn du lịch? Nhắn tin trực tiếp với lễ tân bất kỳ lúc nào.</p>
     </div>
     <div class="c">
-      <div class="im"><span>🚨</span><img src="images/dv-khancap.jpg" alt="Khẩn cấp" loading="lazy"></div>
+      <div class="im"><span>🚨</span><img src="images/dv-khancap.jpg" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=700&q=80'" alt="Khẩn cấp" loading="lazy"></div>
       <h3>Hỗ Trợ Khẩn Cấp 24/7</h3>
       <p>Nút báo động khẩn cấp trong phòng kết nối tức thời đến quầy trực để nhận trợ giúp ngay.</p>
     </div>
@@ -644,7 +648,7 @@ html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
     <div class="c">
       <div class="ic">✉️</div>
       <h3>Email Liên Hệ</h3>
-      <p>lienhe@myhotel.vn</p>
+      <p>qbao308.01@gmail.com</p>
     </div>
     <div class="c">
       <div class="ic">🕒</div>
@@ -707,11 +711,11 @@ html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
   <input type="hidden" id="bl" value="Thường">
   <div class="room-pick" id="room_pick">
     <button type="button" class="rp-opt active" data-v="Thường" onclick="pickRoom('Thường')">
-      <img src="images/photo-1618773928121-c32242e63f39.jpg" alt="Phòng Standard Deluxe">
+      <img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=600&q=80" onerror="this.onerror=function(){this.src='images/phong-thuong.jpg'};this.src='images/photo-1618773928121-c32242e63f39.jpg'" alt="Phòng Standard Deluxe">
       <span class="rp-info"><b>🛏️ Standard Deluxe</b><small>28 m² · 2 người lớn</small><em id="rp_price_std">300.000 ₫/đêm · 60.000 ₫/giờ</em></span>
     </button>
     <button type="button" class="rp-opt" data-v="VIP" onclick="pickRoom('VIP')">
-      <img src="images/photo-1611892440504-42a792e24d32.jpg" alt="Phòng VIP Executive Suite">
+      <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=600&q=80" onerror="this.onerror=function(){this.src='images/phong-vip.jpg'};this.src='images/photo-1611892440504-42a792e24d32.jpg'" alt="Phòng VIP Executive Suite">
       <span class="rp-info"><b>👑 VIP Executive Suite</b><small>55 m² · Hướng biển</small><em id="rp_price_vip">600.000 ₫/đêm · 120.000 ₫/giờ</em></span>
     </button>
   </div>
