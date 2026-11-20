@@ -326,10 +326,12 @@
       isLiveCSKH = true;
       try { localStorage.setItem(LIVE_MODE_KEY, '1'); } catch (e) {}
       updateModeUI();
+      const guestName = localStorage.getItem(GUEST_NAME_KEY) || 'Khách Web (CSKH 24/7)';
+      sendToReceptionistLiveChat(guestName, '👋 [Yêu cầu kết nối] Khách hàng trên Website vừa bấm kết nối cần Nhân viên CSKH 24/7 hỗ trợ!');
       history.push({
         sender: 'bot',
         html: `👩‍💼 <b>Đã kết nối kênh CSKH Trực Tuyến 24/7!</b><br>` +
-              `Quý khách hãy để lại <b>Tên + SĐT</b> cùng nội dung cần hỗ trợ ngay bên dưới. Tin nhắn sẽ đổ chuông trực tiếp trên màn hình Lễ tân trực ca và nhân viên sẽ phản hồi ngay tại đây ạ!<br>` +
+              `Hệ thống đã phát tín hiệu gọi Nhân viên Lễ tân trực ca. Quý khách hãy nhập nội dung cần hỗ trợ (hoặc SĐT) ngay bên dưới để trò chuyện trực tiếp với nhân viên ạ!<br>` +
               `<small>📞 Hotline khẩn cấp 24/7: <b><a href="tel:0900000000" style="color:var(--cb-gold)">0900 000 000</a></b></small>`,
         time: Date.now()
       });
@@ -390,11 +392,19 @@
       }
     });
 
+    // Kiểm tra định kỳ từ localStorage (hỗ trợ cả khi mở cùng trình duyệt hoặc iframe)
+    setInterval(() => {
+      try {
+        const raw = localStorage.getItem('ks_chat');
+        if (raw) syncStaffReplies(JSON.parse(raw));
+      } catch (e) {}
+    }, 1500);
+
     try {
       const db = window.DB || (window.firebase && window.firebase.apps && window.firebase.apps.length ? window.firebase.firestore() : null);
       if (db) {
-        db.collection('chat').where('room', '==', CSKH_ROOM_ID).onSnapshot(snap => {
-          const arr = snap.docs.map(d => d.data());
+        db.collection('chat').onSnapshot(snap => {
+          const arr = snap.docs.map(d => d.data()).filter(m => Number(m.room) === CSKH_ROOM_ID);
           syncStaffReplies(arr);
         }, () => {});
       }

@@ -1729,10 +1729,15 @@ async function initDB() {
     localStorage.setItem('ks_bookings', JSON.stringify(a));
   });
   sub('chat', a => {
-    const prevLen = CHAT.length;
-    if (chatInit && !G && cur && a.length > prevLen) {
-      const last = a[a.length - 1];
-      if (last && last.from === 'khach') ding();
+    const prevIds = new Set(CHAT.map(x => x.id));
+    if (chatInit && !G && cur && a.length > CHAT.length) {
+      const newest = a.find(x => !prevIds.has(x.id)) || a[a.length - 1];
+      if (newest && newest.from === 'khach') {
+        ding();
+        const label = Number(newest.room) === 0 ? '👩‍💼 Khách CSKH Website 24/7' : `Phòng ${newest.room}`;
+        toast(`💬 Tin nhắn mới từ ${label}: "${newest.text.slice(0, 45)}..."`);
+        if (C == null) C = Number(newest.room);
+      }
     }
     chatInit = true;
     CHAT = a;
@@ -2455,8 +2460,9 @@ function guiChat(who, roomNum) {
 
 function chatTabHTML() {
   purgeExpiredAndCheckedOutChats();
-  const rs = [...new Set(CHAT.map(m => m.room))].sort((a, b) => a - b);
-  if (C != null && !rs.includes(C)) C = rs.length ? rs[0] : null;
+  const rs = [...new Set(CHAT.map(m => Number(m.room)))].sort((a, b) => a - b);
+  if (C == null && rs.length) C = rs[0];
+  if (C != null && !rs.includes(Number(C))) C = rs.length ? rs[0] : null;
   if (C != null) seen(C);
 
   return `
@@ -2921,8 +2927,16 @@ window.addEventListener('storage', e => {
   }
   if (e.key === 'ks_chat') {
     try {
-      CHAT = JSON.parse(e.newValue || '[]');
-      onChatUserActive();
+      const next = JSON.parse(e.newValue || '[]');
+      if (!G && cur && next.length > CHAT.length) {
+        const last = next[next.length - 1];
+        if (last && last.from === 'khach') {
+          const label = Number(last.room) === 0 ? '👩‍💼 Khách CSKH Website 24/7' : `Phòng ${last.room}`;
+          toast(`💬 Tin nhắn mới từ ${label}: "${last.text.slice(0, 45)}..."`);
+          if (C == null) C = Number(last.room);
+        }
+      }
+      CHAT = next;
       refresh();
     } catch (err) {}
   }
